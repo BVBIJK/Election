@@ -139,11 +139,12 @@
     /* ── Reveal setup panel ── */
     #reveal-setup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;display:none;}
     #reveal-setup h3{font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
-    .reveal-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .reveal-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;}
     .reveal-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
     .reveal-card h4{font-size:0.75rem;font-weight:700;color:var(--text);margin-bottom:0.75rem;display:flex;align-items:center;gap:6px;}
     .reveal-card h4 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
     .dot-boy{background:#2563eb;}.dot-girl{background:#db2777;}
+    .dot-aboy{background:#0891b2;}.dot-agirl{background:#a855f7;}
     .photo-upload-area{border:2px dashed var(--border);border-radius:8px;padding:1.25rem;text-align:center;cursor:pointer;transition:border-color 0.15s;background:var(--surface);}
     .photo-upload-area:hover{border-color:var(--accent);}
     .photo-upload-area input{display:none;}
@@ -292,6 +293,8 @@
     }
     .badge-boy{background:rgba(37,99,235,0.25);border-color:rgba(37,99,235,0.6);color:#93c5fd;}
     .badge-girl{background:rgba(219,39,119,0.25);border-color:rgba(219,39,119,0.6);color:#f9a8d4;}
+    .badge-aboy{background:rgba(8,145,178,0.25);border-color:rgba(8,145,178,0.6);color:#67e8f9;}
+    .badge-agirl{background:rgba(168,85,247,0.25);border-color:rgba(168,85,247,0.6);color:#d8b4fe;}
 
     /* next btn shown on winner screen */
     #reveal-next{
@@ -303,6 +306,9 @@
     }
     #reveal-next:hover{background:rgba(255,255,255,0.2);}
 
+    @media(max-width:900px){
+      .reveal-grid{grid-template-columns:1fr 1fr;}
+    }
     @media(max-width:640px){
       main{padding:1rem;}header{padding:0 1rem;}#toolbar{padding:0.7rem 1rem;}
       .cand-row{grid-template-columns:1fr auto;}.bar-cell{display:none;}
@@ -377,7 +383,7 @@
 
   <!-- Reveal setup (photo upload) -->
   <div id="reveal-setup">
-    <h3>🎭 <span id="setup-title">Reveal Setup</span></h3>
+    <h3>🎭 <span id="setup-title">Reveal Setup — Candidate Photos</span></h3>
     <div class="reveal-grid">
       <div class="reveal-card">
         <h4><span class="dot dot-boy"></span> Head Boy photo</h4>
@@ -396,6 +402,26 @@
           <img id="preview-girl" class="photo-preview" src="" alt="" style="display:none" />
           <div id="icon-girl" style="font-size:2rem;margin-bottom:6px;">👤</div>
           <div class="photo-label" id="label-girl">Click to upload photo</div>
+          <div class="photo-hint">PNG, JPG — shown on reveal screen</div>
+        </div>
+      </div>
+      <div class="reveal-card">
+        <h4><span class="dot dot-aboy"></span> Asst. Head Boy photo</h4>
+        <div class="photo-upload-area" onclick="document.getElementById('photo-aboy').click()">
+          <input type="file" id="photo-aboy" accept="image/*" onchange="handlePhoto('aboy',this)" />
+          <img id="preview-aboy" class="photo-preview" src="" alt="" style="display:none" />
+          <div id="icon-aboy" style="font-size:2rem;margin-bottom:6px;">👤</div>
+          <div class="photo-label" id="label-aboy">Click to upload photo</div>
+          <div class="photo-hint">PNG, JPG — shown on reveal screen</div>
+        </div>
+      </div>
+      <div class="reveal-card">
+        <h4><span class="dot dot-agirl"></span> Asst. Head Girl photo</h4>
+        <div class="photo-upload-area" onclick="document.getElementById('photo-agirl').click()">
+          <input type="file" id="photo-agirl" accept="image/*" onchange="handlePhoto('agirl',this)" />
+          <img id="preview-agirl" class="photo-preview" src="" alt="" style="display:none" />
+          <div id="icon-agirl" style="font-size:2rem;margin-bottom:6px;">👤</div>
+          <div class="photo-label" id="label-agirl">Click to upload photo</div>
           <div class="photo-hint">PNG, JPG — shown on reveal screen</div>
         </div>
       </div>
@@ -677,14 +703,14 @@ function startReveal(category) {
   document.getElementById('screen-winner').style.display = 'none';
   document.getElementById('reveal-next').style.display = 'none';
   document.getElementById('countdown-label').textContent = 'Announcing ' + category;
-  playCountdownSound();
   runCountdown(10, () => showWinner(cat));
 }
 
 function showWinner(cat) {
-  stopCountdownSound();
   const w = winnerData[cat];
-  const isGirl = cat.includes('GIRL');
+  const isGirl = cat.includes('GIRL') && !cat.includes('ASST') && !cat.includes('ASSISTANT');
+  const isAsstBoy = cat.includes('ASST') && cat.includes('BOY') || cat.includes('ASSISTANT') && cat.includes('BOY');
+  const isAsstGirl = cat.includes('ASST') && cat.includes('GIRL') || cat.includes('ASSISTANT') && cat.includes('GIRL');
 
   document.getElementById('screen-countdown').style.display = 'none';
   const sw = document.getElementById('screen-winner');
@@ -692,7 +718,12 @@ function showWinner(cat) {
 
   document.getElementById('winner-title-label').textContent = cat;
   document.getElementById('winner-cat-badge').textContent = cat;
-  document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + (isGirl ? 'badge-girl' : 'badge-boy');
+
+  let badgeClass = 'badge-boy';
+  if (isAsstBoy) badgeClass = 'badge-aboy';
+  else if (isAsstGirl) badgeClass = 'badge-agirl';
+  else if (isGirl) badgeClass = 'badge-girl';
+  document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + badgeClass;
 
   const nameEl = document.getElementById('winner-name-text');
   const votesEl = document.getElementById('winner-votes-text');
@@ -702,9 +733,15 @@ function showWinner(cat) {
   nameEl.textContent = w.name;
   votesEl.textContent = w.votes + ' votes';
 
+  // Photo key mapping: detect which role this category corresponds to
+  let photoKey = null;
+  if (isAsstBoy) photoKey = 'aboy';
+  else if (isAsstGirl) photoKey = 'agirl';
+  else if (isGirl) photoKey = 'girl';
+  else if (cat.includes('BOY')) photoKey = 'boy';
+
   const photoEl = document.getElementById('winner-photo');
   const placeholderEl = document.getElementById('winner-photo-placeholder');
-  const photoKey = cat.includes('GIRL') ? 'girl' : cat.includes('BOY') ? 'boy' : null;
   if (photoKey && photoData[photoKey]) {
     photoEl.src = photoData[photoKey];
     photoEl.style.animation = 'none'; void photoEl.offsetWidth; photoEl.style.animation = '';
@@ -723,7 +760,8 @@ function showWinner(cat) {
     nextBtn.style.display = 'none';
   }
 
-  launchConfetti(isGirl ? '#f9a8d4' : '#93c5fd');
+  const accentColor = isAsstGirl ? '#d8b4fe' : isAsstBoy ? '#67e8f9' : isGirl ? '#f9a8d4' : '#93c5fd';
+  launchConfetti(accentColor);
 }
 
 function revealNext() {
@@ -737,7 +775,6 @@ function revealNext() {
 function closeReveal() {
   document.getElementById('reveal-overlay').classList.remove('active');
   clearInterval(countdownTimer);
-  stopCountdownSound();
   stopConfetti();
 }
 
@@ -800,62 +837,6 @@ function launchConfetti(accentColor) {
 function stopConfetti() {
   if (confettiAnim) cancelAnimationFrame(confettiAnim);
   confettiParticles = [];
-}
-
-/* ════ COUNTDOWN SOUND ════ */
-let audioCtx = null;
-let tickInterval = null;
-
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-
-function playTick(freq = 880, duration = 0.08) {
-  const ctx = getAudioCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(freq, ctx.currentTime);
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + duration);
-}
-
-function playFinalBeep() {
-  const ctx = getAudioCtx();
-  [[523, 0], [659, 0.15], [784, 0.3], [1047, 0.5]].forEach(([freq, delay]) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
-    gain.gain.setValueAtTime(0.4, ctx.currentTime + delay);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
-    osc.start(ctx.currentTime + delay);
-    osc.stop(ctx.currentTime + delay + 0.4);
-  });
-}
-
-function playCountdownSound() {
-  let secondsLeft = 10;
-  playTick(880);
-  tickInterval = setInterval(() => {
-    secondsLeft--;
-    const freq = secondsLeft <= 3 ? 1100 : 880;
-    playTick(freq);
-    if (secondsLeft <= 0) stopCountdownSound();
-  }, 1000);
-}
-
-function stopCountdownSound() {
-  clearInterval(tickInterval);
-  tickInterval = null;
-  try { playFinalBeep(); } catch(e) {}
 }
 </script>
 </body>
