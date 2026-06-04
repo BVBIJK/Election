@@ -23,6 +23,95 @@
     }
     body { background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh; }
 
+    /* ── Password Gate ── */
+    #password-gate {
+      position:fixed;inset:0;z-index:99999;
+      background:var(--blue-900);
+      display:flex;align-items:center;justify-content:center;
+    }
+    #password-gate.unlocked {
+      animation:gate-fade 0.4s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes gate-fade {
+      from{opacity:1;transform:scale(1);}
+      to{opacity:0;transform:scale(1.04);}
+    }
+    .gate-box {
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;
+      padding:2.5rem 2.25rem;
+      width:100%;max-width:380px;
+      text-align:center;
+    }
+    .gate-icon {
+      width:52px;height:52px;
+      background:rgba(255,255,255,0.08);
+      border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:24px;
+      margin:0 auto 1.25rem;
+    }
+    .gate-title {
+      font-family:var(--font);font-size:1.25rem;font-weight:700;
+      color:#fff;margin-bottom:0.35rem;
+    }
+    .gate-sub {
+      font-size:0.82rem;color:rgba(255,255,255,0.45);
+      margin-bottom:1.75rem;line-height:1.5;
+    }
+    .gate-input-wrap {
+      position:relative;margin-bottom:0.75rem;
+    }
+    #gate-input {
+      width:100%;height:46px;
+      background:rgba(255,255,255,0.07);
+      border:1px solid rgba(255,255,255,0.15);
+      border-radius:10px;
+      color:#fff;
+      font-family:var(--mono);font-size:1rem;letter-spacing:0.12em;
+      text-align:center;
+      padding:0 3rem;
+      outline:none;
+      transition:border-color 0.15s,background 0.15s;
+      -webkit-text-security:disc;
+    }
+    #gate-input::placeholder{letter-spacing:0.04em;color:rgba(255,255,255,0.3);font-family:var(--font);}
+    #gate-input:focus{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);}
+    #gate-input.shake{animation:shake 0.35s ease;}
+    @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}50%{transform:translateX(6px);}}
+    #gate-input.error{border-color:rgba(239,68,68,0.6);background:rgba(239,68,68,0.08);}
+    #gate-toggle {
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;
+      color:rgba(255,255,255,0.35);font-size:18px;
+      padding:4px;transition:color 0.15s;
+      font-family:sans-serif;
+    }
+    #gate-toggle:hover{color:rgba(255,255,255,0.7);}
+    #gate-error {
+      font-size:0.75rem;color:#f87171;
+      margin-bottom:0.75rem;min-height:1rem;
+      font-family:var(--mono);
+    }
+    #gate-btn {
+      width:100%;height:46px;
+      background:var(--blue-600);
+      border:none;border-radius:10px;
+      color:#fff;font-family:var(--font);font-size:0.9rem;font-weight:700;
+      cursor:pointer;
+      transition:background 0.15s,transform 0.1s;
+      letter-spacing:0.02em;
+    }
+    #gate-btn:hover{background:var(--blue-500);}
+    #gate-btn:active{transform:scale(0.98);}
+    #gate-btn:disabled{opacity:0.5;cursor:not-allowed;}
+    .gate-attempts {
+      font-size:0.7rem;color:rgba(255,255,255,0.25);
+      margin-top:1.25rem;font-family:var(--mono);
+    }
+
     /* ── Header ── */
     header {
       background:var(--blue-700);padding:0 2rem;height:60px;
@@ -218,10 +307,27 @@
       main{padding:1rem;}header{padding:0 1rem;}#toolbar{padding:0.7rem 1rem;}
       .cand-row{grid-template-columns:1fr auto;}.bar-cell{display:none;}
       .reveal-grid{grid-template-columns:1fr;}
+      .gate-box{margin:1rem;}
     }
   </style>
 </head>
 <body>
+
+<!-- ═══ PASSWORD GATE ═══ -->
+<div id="password-gate">
+  <div class="gate-box">
+    <div class="gate-icon">🔒</div>
+    <div class="gate-title">Admin Access Only</div>
+    <div class="gate-sub">This panel is restricted to authorised staff.<br>Students are not permitted to enter.</div>
+    <div class="gate-input-wrap">
+      <input type="password" id="gate-input" placeholder="Enter password" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkPassword()" />
+      <button id="gate-toggle" onclick="toggleGateVisibility()" title="Show/hide password">👁</button>
+    </div>
+    <div id="gate-error"></div>
+    <button id="gate-btn" onclick="checkPassword()">Unlock Panel →</button>
+    <div class="gate-attempts" id="gate-attempts-msg"></div>
+  </div>
+</div>
 
 <!-- ═══ REVEAL OVERLAY ═══ -->
 <div id="reveal-overlay">
@@ -321,14 +427,85 @@
 </main>
 
 <script>
+/* ════════════════════════════════════
+   PASSWORD GATE
+   Change ADMIN_PASSWORD to whatever you want.
+   ════════════════════════════════════ */
+const ADMIN_PASSWORD = 'admin2025';
+const MAX_ATTEMPTS = 5;
+let gateAttempts = 0;
+let gateLocked = false;
+
+function checkPassword() {
+  if (gateLocked) return;
+  const input = document.getElementById('gate-input');
+  const val = input.value;
+  if (!val) { shakeInput(); return; }
+
+  if (val === ADMIN_PASSWORD) {
+    // Correct — animate out
+    input.style.borderColor = 'rgba(52,211,153,0.6)';
+    document.getElementById('gate-error').textContent = '';
+    document.getElementById('gate-btn').disabled = true;
+    document.getElementById('gate-btn').textContent = '✓ Unlocked';
+    const gate = document.getElementById('password-gate');
+    gate.classList.add('unlocked');
+    setTimeout(() => { gate.style.display = 'none'; }, 420);
+  } else {
+    gateAttempts++;
+    shakeInput();
+    input.classList.add('error');
+    setTimeout(() => input.classList.remove('error'), 600);
+    const remaining = MAX_ATTEMPTS - gateAttempts;
+    if (remaining <= 0) {
+      gateLocked = true;
+      document.getElementById('gate-error').textContent = 'Too many attempts. Please reload the page.';
+      document.getElementById('gate-btn').disabled = true;
+      input.disabled = true;
+      document.getElementById('gate-attempts-msg').textContent = '';
+    } else {
+      document.getElementById('gate-error').textContent = 'Incorrect password.';
+      document.getElementById('gate-attempts-msg').textContent = remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining';
+    }
+    input.value = '';
+    input.focus();
+  }
+}
+
+function shakeInput() {
+  const input = document.getElementById('gate-input');
+  input.classList.remove('shake');
+  void input.offsetWidth;
+  input.classList.add('shake');
+}
+
+function toggleGateVisibility() {
+  const input = document.getElementById('gate-input');
+  const btn = document.getElementById('gate-toggle');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+// Focus the input on load
+window.addEventListener('load', () => {
+  document.getElementById('gate-input').focus();
+});
+
+/* ════════════════════════════════════
+   MAIN APP (unchanged below)
+   ════════════════════════════════════ */
 const BAR_COLORS=['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#db2777','#65a30d'];
-let winnerData={};     // { 'HEAD BOY': {name,votes}, 'HEAD GIRL': {name,votes} }
-let photoData={};      // { boy: dataURL, girl: dataURL }
-let revealQueue=[];    // categories queued for sequential reveal
+let winnerData={};
+let photoData={};
+let revealQueue=[];
 let revealIndex=0;
 let countdownTimer=null;
 
-/* ── Photos ── */
 function handlePhoto(role, input) {
   if (!input.files[0]) return;
   const reader = new FileReader();
@@ -342,11 +519,9 @@ function handlePhoto(role, input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-/* ── Status ── */
 function showStatus(msg,type){const el=document.getElementById('status-msg');el.textContent=msg;el.className=type;el.style.display='block';}
 function hideStatus(){document.getElementById('status-msg').style.display='none';}
 
-/* ── CSV loading ── */
 async function fetchCsv(path){const res=await fetch(path+'?t='+Date.now());if(!res.ok)throw new Error(`HTTP ${res.status}`);return res.text();}
 async function discoverCsvPaths(){
   const owner=location.hostname.split('.')[0];
@@ -390,7 +565,6 @@ async function loadAll(){
   }catch(e){showStatus('Error: '+e.message,'error');document.getElementById('placeholder').innerHTML='<div class="icon">⚠️</div><p>'+e.message+'</p>';document.getElementById('placeholder').style.display='block';}
   btn.disabled=false;btn.innerHTML='<span>↻</span> Refresh Votes';
 }
-window.addEventListener('load',loadAll);
 
 function renderDashboard(records,nodeLog,totalFiles){
   const catMap={};
@@ -398,7 +572,6 @@ function renderDashboard(records,nodeLog,totalFiles){
   const categories=Object.keys(catMap);
   let totalVotes=0;records.forEach(r=>{totalVotes+=parseInt(r['Votes'])||0;});
 
-  // Store winner data
   winnerData={};
   categories.forEach(cat=>{
     const sorted=Object.entries(catMap[cat]).sort((a,b)=>b[1]-a[1]);
@@ -433,9 +606,7 @@ function renderDashboard(records,nodeLog,totalFiles){
   nodeLog.forEach(n=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="fname">${n.file}</td><td><span class="node-tag">${n.node}</span></td><td>${n.count}</td><td>${n.status==='ok'?'<span class="status-ok">✓ ok</span>':'<span class="status-fail">✗ failed</span>'}</td><td>${n.exported}</td>`;tbody.appendChild(tr);});
 }
 
-/* ════════════════════════════════════
-   REVEAL LOGIC
-   ════════════════════════════════════ */
+/* ════ REVEAL ════ */
 function startReveal(category) {
   const cat = category.toUpperCase();
   if (!winnerData[cat]) { alert(`No data for category "${category}". Load votes first.`); return; }
@@ -455,7 +626,6 @@ function runCountdown(secs, onDone) {
   barEl.style.transition = 'none';
   barEl.style.width = '100%';
   clearInterval(countdownTimer);
-  // allow bar reset to render
   setTimeout(()=>{
     barEl.style.transition = 'width 1s linear';
     barEl.style.width = ((n-1)/secs*100)+'%';
@@ -481,7 +651,6 @@ function showWinner(cat) {
   document.getElementById('winner-cat-badge').textContent = cat;
   document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + (isGirl ? 'badge-girl' : 'badge-boy');
 
-  // Reset animations by cloning nodes
   const nameEl = document.getElementById('winner-name-text');
   const votesEl = document.getElementById('winner-votes-text');
   const badgeEl = document.getElementById('winner-cat-badge');
@@ -490,7 +659,6 @@ function showWinner(cat) {
   nameEl.textContent = w.name;
   votesEl.textContent = w.votes + ' votes';
 
-  // Photo
   const photoEl = document.getElementById('winner-photo');
   const placeholderEl = document.getElementById('winner-photo-placeholder');
   if (photoData[photoKey]) {
@@ -504,9 +672,7 @@ function showWinner(cat) {
     placeholderEl.style.animation='none'; void placeholderEl.offsetWidth;
   }
 
-  // Show next button only for HEAD BOY reveal
   document.getElementById('reveal-next').style.display = (!isGirl) ? 'block' : 'none';
-
   launchConfetti(isGirl ? '#f9a8d4' : '#93c5fd');
 }
 
