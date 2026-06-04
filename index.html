@@ -333,25 +333,25 @@
 <div id="reveal-overlay">
   <canvas id="confetti-canvas"></canvas>
   <button id="reveal-close" onclick="closeReveal()">✕ Close</button>
-  <button id="reveal-next" onclick="revealNext()">Reveal Head Girl →</button>
+  <button id="reveal-next" onclick="revealNext()">Reveal Next →</button>
 
   <!-- Countdown -->
   <div id="screen-countdown">
-    <div class="reveal-eyebrow" id="countdown-label">Announcing Head Boy</div>
+    <div class="reveal-eyebrow" id="countdown-label">Announcing…</div>
     <div id="countdown-number">10</div>
     <div class="countdown-bar-wrap"><div class="countdown-bar-fill" id="countdown-bar" style="width:100%"></div></div>
   </div>
 
   <!-- Winner -->
   <div id="screen-winner">
-    <div class="winner-title" id="winner-title-label">Head Boy</div>
+    <div class="winner-title" id="winner-title-label">Winner</div>
     <div class="winner-photo-wrap">
       <img id="winner-photo" class="winner-photo" src="" alt="Winner" />
       <div id="winner-photo-placeholder" class="winner-photo-placeholder">🏆</div>
     </div>
     <div class="winner-name" id="winner-name-text">—</div>
     <div class="winner-votes" id="winner-votes-text">— votes</div>
-    <div class="winner-category-badge badge-boy" id="winner-cat-badge">Head Boy</div>
+    <div class="winner-category-badge badge-boy" id="winner-cat-badge">Winner</div>
   </div>
 </div>
 
@@ -428,7 +428,6 @@
 <script>
 /* ════════════════════════════════════
    PASSWORD GATE
-   Change ADMIN_PASSWORD to whatever you want.
    ════════════════════════════════════ */
 const ADMIN_PASSWORD = 'admin2025';
 const MAX_ATTEMPTS = 5;
@@ -442,7 +441,6 @@ function checkPassword() {
   if (!val) { shakeInput(); return; }
 
   if (val === ADMIN_PASSWORD) {
-    // Correct — animate out
     input.style.borderColor = 'rgba(52,211,153,0.6)';
     document.getElementById('gate-error').textContent = '';
     document.getElementById('gate-btn').disabled = true;
@@ -490,126 +488,180 @@ function toggleGateVisibility() {
   }
 }
 
-// Focus the input on load
 window.addEventListener('load', () => {
   document.getElementById('gate-input').focus();
 });
 
 /* ════════════════════════════════════
-   MAIN APP (unchanged below)
+   MAIN APP
    ════════════════════════════════════ */
-const BAR_COLORS=['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#db2777','#65a30d'];
-let winnerData={};
-let photoData={};
-let revealQueue=[];
-let revealIndex=0;
-let countdownTimer=null;
+const BAR_COLORS = ['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#db2777','#65a30d'];
+
+let winnerData = {};
+let photoData = {};
+let revealCategories = [];
+let revealIndex = 0;
+let countdownTimer = null;
 
 function handlePhoto(role, input) {
   if (!input.files[0]) return;
   const reader = new FileReader();
   reader.onload = e => {
     photoData[role] = e.target.result;
-    document.getElementById('preview-'+role).src = e.target.result;
-    document.getElementById('preview-'+role).style.display = 'block';
-    document.getElementById('icon-'+role).style.display = 'none';
-    document.getElementById('label-'+role).textContent = input.files[0].name;
+    document.getElementById('preview-' + role).src = e.target.result;
+    document.getElementById('preview-' + role).style.display = 'block';
+    document.getElementById('icon-' + role).style.display = 'none';
+    document.getElementById('label-' + role).textContent = input.files[0].name;
   };
   reader.readAsDataURL(input.files[0]);
 }
 
-function showStatus(msg,type){const el=document.getElementById('status-msg');el.textContent=msg;el.className=type;el.style.display='block';}
-function hideStatus(){document.getElementById('status-msg').style.display='none';}
-
-async function fetchCsv(path){const res=await fetch(path+'?t='+Date.now());if(!res.ok)throw new Error(`HTTP ${res.status}`);return res.text();}
-async function discoverCsvPaths(){
-  const owner=location.hostname.split('.')[0];
-  const repo=location.pathname.replace(/\/$/,'').split('/').filter(Boolean)[0]||'';
-  if(!repo)throw new Error("Could not detect repo name from URL.");
-  const res=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/votes`);
-  if(!res.ok)throw new Error(`GitHub API error ${res.status}`);
-  const files=await res.json();
-  return files.filter(f=>f.name.endsWith('.csv')).map(f=>`votes/${f.name}`);
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = type;
+  el.style.display = 'block';
 }
-function parseCsv(text){
-  const lines=text.trim().split('\n').filter(l=>l.trim());
-  if(lines.length<2)return[];
-  const headers=lines[0].split(',').map(h=>h.trim());
-  return lines.slice(1).map(line=>{const vals=line.split(',').map(v=>v.trim());const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;});
+function hideStatus() {
+  document.getElementById('status-msg').style.display = 'none';
 }
-function nodeNameFromPath(path){const m=path.split('/').pop().match(/Node_(\d+)/i);return m?`Node ${m[1]}`:path.split('/').pop();}
 
-async function loadAll(){
-  const btn=document.getElementById('load-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Loading…';
-  showStatus('Discovering CSV files…','info');
-  document.getElementById('dashboard').style.display='none';
-  document.getElementById('placeholder').style.display='none';
-  document.getElementById('reveal-setup').style.display='none';
-  try{
-    const paths=await discoverCsvPaths();
-    if(!paths.length){showStatus('No CSVs found in votes/ folder.','error');document.getElementById('placeholder').style.display='block';btn.disabled=false;btn.innerHTML='<span>↻</span> Refresh Votes';return;}
-    showStatus(`Found ${paths.length} file(s). Fetching…`,'info');
-    const nodeLog=[],allRecords=[];
-    for(const path of paths){
-      const fname=path.split('/').pop(),node=nodeNameFromPath(path);
-      try{const raw=await fetchCsv(path);const records=parseCsv(raw);const exp=records.map(r=>r['Exported At']).filter(Boolean).sort().pop()||'—';nodeLog.push({file:fname,node,count:records.length,status:'ok',exported:exp});allRecords.push(...records);}
-      catch(e){nodeLog.push({file:fname,node,count:0,status:'fail',exported:'—'});}
+async function fetchCsv(path) {
+  const res = await fetch(path + '?t=' + Date.now());
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+async function discoverCsvPaths() {
+  const owner = location.hostname.split('.')[0];
+  const repo = location.pathname.replace(/\/$/, '').split('/').filter(Boolean)[0] || '';
+  if (!repo) throw new Error("Could not detect repo name from URL.");
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/votes`);
+  if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
+  const files = await res.json();
+  return files.filter(f => f.name.endsWith('.csv')).map(f => `votes/${f.name}`);
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+
+function nodeNameFromPath(path) {
+  const m = path.split('/').pop().match(/Node_(\d+)/i);
+  return m ? `Node ${m[1]}` : path.split('/').pop();
+}
+
+async function loadAll() {
+  const btn = document.getElementById('load-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Loading…';
+  showStatus('Discovering CSV files…', 'info');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('reveal-setup').style.display = 'none';
+  try {
+    const paths = await discoverCsvPaths();
+    if (!paths.length) {
+      showStatus('No CSVs found in votes/ folder.', 'error');
+      document.getElementById('placeholder').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<span>↻</span> Refresh Votes';
+      return;
     }
-    renderDashboard(allRecords,nodeLog,paths.length);
+    showStatus(`Found ${paths.length} file(s). Fetching…`, 'info');
+    const nodeLog = [], allRecords = [];
+    for (const path of paths) {
+      const fname = path.split('/').pop(), node = nodeNameFromPath(path);
+      try {
+        const raw = await fetchCsv(path);
+        const records = parseCsv(raw);
+        const exp = records.map(r => r['Exported At']).filter(Boolean).sort().pop() || '—';
+        nodeLog.push({ file: fname, node, count: records.length, status: 'ok', exported: exp });
+        allRecords.push(...records);
+      } catch(e) {
+        nodeLog.push({ file: fname, node, count: 0, status: 'fail', exported: '—' });
+      }
+    }
+    renderDashboard(allRecords, nodeLog, paths.length);
     hideStatus();
-    document.getElementById('dashboard').style.display='block';
-    document.getElementById('reveal-setup').style.display='block';
-    document.getElementById('last-refresh').textContent='refreshed '+new Date().toLocaleTimeString();
-  }catch(e){showStatus('Error: '+e.message,'error');document.getElementById('placeholder').innerHTML='<div class="icon">⚠️</div><p>'+e.message+'</p>';document.getElementById('placeholder').style.display='block';}
-  btn.disabled=false;btn.innerHTML='<span>↻</span> Refresh Votes';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('reveal-setup').style.display = 'block';
+    document.getElementById('last-refresh').textContent = 'refreshed ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    showStatus('Error: ' + e.message, 'error');
+    document.getElementById('placeholder').innerHTML = '<div class="icon">⚠️</div><p>' + e.message + '</p>';
+    document.getElementById('placeholder').style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<span>↻</span> Refresh Votes';
 }
 
-function renderDashboard(records,nodeLog,totalFiles){
-  const catMap={};
-  records.forEach(r=>{const cat=(r['Category']||'Unknown').toUpperCase();const name=r['Name']||'Unknown';const v=parseInt(r['Votes'])||0;if(!catMap[cat])catMap[cat]={};if(!catMap[cat][name])catMap[cat][name]=0;catMap[cat][name]+=v;});
-  const categories=Object.keys(catMap);
-  let totalVotes=0;records.forEach(r=>{totalVotes+=parseInt(r['Votes'])||0;});
+function renderDashboard(records, nodeLog, totalFiles) {
+  const catMap = {};
+  records.forEach(r => {
+    const cat = (r['Category'] || 'Unknown').toUpperCase();
+    const name = r['Name'] || 'Unknown';
+    const v = parseInt(r['Votes']) || 0;
+    if (!catMap[cat]) catMap[cat] = {};
+    if (!catMap[cat][name]) catMap[cat][name] = 0;
+    catMap[cat][name] += v;
+  });
+  const categories = Object.keys(catMap);
+  let totalVotes = 0;
+  records.forEach(r => { totalVotes += parseInt(r['Votes']) || 0; });
 
-  winnerData={};
-  categories.forEach(cat=>{
-    const sorted=Object.entries(catMap[cat]).sort((a,b)=>b[1]-a[1]);
-    if(sorted[0])winnerData[cat]={name:sorted[0][0],votes:sorted[0][1]};
+  winnerData = {};
+  categories.forEach(cat => {
+    const sorted = Object.entries(catMap[cat]).sort((a, b) => b[1] - a[1]);
+    if (sorted[0]) winnerData[cat] = { name: sorted[0][0], votes: sorted[0][1] };
   });
 
-  document.getElementById('summary-grid').innerHTML=`
+  document.getElementById('summary-grid').innerHTML = `
     <div class="stat-card c1"><div class="s-label">Total votes cast</div><div class="s-val">${totalVotes}</div></div>
     <div class="stat-card c2"><div class="s-label">Nodes loaded</div><div class="s-val">${totalFiles}</div></div>
     <div class="stat-card c3"><div class="s-label">Categories</div><div class="s-val">${categories.length}</div></div>
-    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r=>r['Name'])).size}</div></div>`;
+    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => r['Name'])).size}</div></div>`;
 
-  const catWrap=document.getElementById('cat-blocks');catWrap.innerHTML='';
-  categories.forEach((cat,ci)=>{
-    const nameMap=catMap[cat];
-    const catTotal=Object.values(nameMap).reduce((a,b)=>a+b,0);
-    const sorted=Object.entries(nameMap).sort((a,b)=>b[1]-a[1]);
-    const maxVotes=sorted[0]?.[1]||1;
-    const color=BAR_COLORS[ci%BAR_COLORS.length];
-    const block=document.createElement('div');block.className='category-block';
-    block.innerHTML=`<div class="cat-header"><span class="cat-name">${cat}</span><span class="cat-pill">${catTotal} votes · ${sorted.length} candidate${sorted.length!==1?'s':''}</span></div>`;
-    sorted.forEach(([name,votes],idx)=>{
-      const pct=Math.round((votes/maxVotes)*100);const isWinner=idx===0;
-      const row=document.createElement('div');row.className='cand-row';
-      row.innerHTML=`<div class="cand-name-wrap"><div class="cand-rank${isWinner?' first':''}">${idx+1}</div><span class="cand-name">${name}</span>${isWinner?'<span class="leading-badge">Leading</span>':''}</div><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><span class="bar-pct">${pct}%</span></div><div class="cand-count" style="color:${color}">${votes}</div>`;
+  const catWrap = document.getElementById('cat-blocks');
+  catWrap.innerHTML = '';
+  categories.forEach((cat, ci) => {
+    const nameMap = catMap[cat];
+    const catTotal = Object.values(nameMap).reduce((a, b) => a + b, 0);
+    const sorted = Object.entries(nameMap).sort((a, b) => b[1] - a[1]);
+    const maxVotes = sorted[0]?.[1] || 1;
+    const color = BAR_COLORS[ci % BAR_COLORS.length];
+    const block = document.createElement('div');
+    block.className = 'category-block';
+    block.innerHTML = `<div class="cat-header"><span class="cat-name">${cat}</span><span class="cat-pill">${catTotal} votes · ${sorted.length} candidate${sorted.length !== 1 ? 's' : ''}</span></div>`;
+    sorted.forEach(([name, votes], idx) => {
+      const pct = Math.round((votes / maxVotes) * 100);
+      const isWinner = idx === 0;
+      const row = document.createElement('div');
+      row.className = 'cand-row';
+      row.innerHTML = `<div class="cand-name-wrap"><div class="cand-rank${isWinner ? ' first' : ''}">${idx + 1}</div><span class="cand-name">${name}</span>${isWinner ? '<span class="leading-badge">Leading</span>' : ''}</div><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><span class="bar-pct">${pct}%</span></div><div class="cand-count" style="color:${color}">${votes}</div>`;
       block.appendChild(row);
     });
     catWrap.appendChild(block);
   });
 
-  const tbody=document.getElementById('node-tbody');tbody.innerHTML='';
-  nodeLog.forEach(n=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="fname">${n.file}</td><td><span class="node-tag">${n.node}</span></td><td>${n.count}</td><td>${n.status==='ok'?'<span class="status-ok">✓ ok</span>':'<span class="status-fail">✗ failed</span>'}</td><td>${n.exported}</td>`;tbody.appendChild(tr);});
+  const tbody = document.getElementById('node-tbody');
+  tbody.innerHTML = '';
+  nodeLog.forEach(n => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="fname">${n.file}</td><td><span class="node-tag">${n.node}</span></td><td>${n.count}</td><td>${n.status === 'ok' ? '<span class="status-ok">✓ ok</span>' : '<span class="status-fail">✗ failed</span>'}</td><td>${n.exported}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 /* ════ REVEAL ════ */
-/* ════ REVEAL ════ */
-let revealCategories = [];
-let revealIndex = 0;
-
 function startRevealAll() {
   revealCategories = Object.keys(winnerData);
   if (!revealCategories.length) { alert('Load votes first.'); return; }
@@ -626,14 +678,13 @@ function startReveal(category) {
   document.getElementById('reveal-next').style.display = 'none';
   document.getElementById('countdown-label').textContent = 'Announcing ' + category;
   playCountdownSound();
-  runCountdown(10, () => showWinner(cat));  // ← this line was missing
+  runCountdown(10, () => showWinner(cat));
 }
 
 function showWinner(cat) {
   stopCountdownSound();
   const w = winnerData[cat];
   const isGirl = cat.includes('GIRL');
-  const photoKey = isGirl ? 'girl' : 'boy';
 
   document.getElementById('screen-countdown').style.display = 'none';
   const sw = document.getElementById('screen-winner');
@@ -653,10 +704,9 @@ function showWinner(cat) {
 
   const photoEl = document.getElementById('winner-photo');
   const placeholderEl = document.getElementById('winner-photo-placeholder');
-  // photo logic: try girl/boy key, else hide
-  const photoKey2 = cat.includes('GIRL') ? 'girl' : cat.includes('BOY') ? 'boy' : null;
-  if (photoKey2 && photoData[photoKey2]) {
-    photoEl.src = photoData[photoKey2];
+  const photoKey = cat.includes('GIRL') ? 'girl' : cat.includes('BOY') ? 'boy' : null;
+  if (photoKey && photoData[photoKey]) {
+    photoEl.src = photoData[photoKey];
     photoEl.style.animation = 'none'; void photoEl.offsetWidth; photoEl.style.animation = '';
     photoEl.classList.add('visible');
     placeholderEl.style.display = 'none';
@@ -665,7 +715,6 @@ function showWinner(cat) {
     placeholderEl.style.display = 'flex';
   }
 
-  // Show "Next" button if more categories remain
   const nextBtn = document.getElementById('reveal-next');
   if (revealIndex < revealCategories.length - 1) {
     nextBtn.textContent = 'Reveal ' + revealCategories[revealIndex + 1] + ' →';
@@ -713,7 +762,7 @@ function runCountdown(secs, onDone) {
 }
 
 /* ════ CONFETTI ════ */
-  let confettiAnim = null;
+let confettiAnim = null;
 let confettiParticles = [];
 
 function launchConfetti(accentColor) {
@@ -752,10 +801,10 @@ function stopConfetti() {
   if (confettiAnim) cancelAnimationFrame(confettiAnim);
   confettiParticles = [];
 }
+
 /* ════ COUNTDOWN SOUND ════ */
 let audioCtx = null;
 let tickInterval = null;
-let beepTimeout = null;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -777,7 +826,6 @@ function playTick(freq = 880, duration = 0.08) {
 }
 
 function playFinalBeep() {
-  // Rising three-tone fanfare on reveal
   const ctx = getAudioCtx();
   [[523, 0], [659, 0.15], [784, 0.3], [1047, 0.5]].forEach(([freq, delay]) => {
     const osc = ctx.createOscillator();
@@ -795,20 +843,20 @@ function playFinalBeep() {
 
 function playCountdownSound() {
   let secondsLeft = 10;
+  playTick(880);
   tickInterval = setInterval(() => {
     secondsLeft--;
-    // Tick gets higher and faster in the last 3 seconds
     const freq = secondsLeft <= 3 ? 1100 : 880;
     playTick(freq);
     if (secondsLeft <= 0) stopCountdownSound();
   }, 1000);
-  // Immediately play first tick
-  playTick(880);
 }
 
 function stopCountdownSound() {
   clearInterval(tickInterval);
   tickInterval = null;
-  // Play fanfare when winner reveals
   try { playFinalBeep(); } catch(e) {}
 }
+</script>
+</body>
+</html>
