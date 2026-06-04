@@ -626,7 +626,7 @@ function startReveal(category) {
   document.getElementById('reveal-next').style.display = 'none';
   document.getElementById('countdown-label').textContent = 'Announcing ' + category;
   playCountdownSound();
-  runCountdown(10, () => showWinner(cat));
+  runCountdown(10, () => showWinner(cat));  // ← this line was missing
 }
 
 function showWinner(cat) {
@@ -692,7 +692,66 @@ function closeReveal() {
   stopConfetti();
 }
 
+function runCountdown(secs, onDone) {
+  let n = secs;
+  const numEl = document.getElementById('countdown-number');
+  const barEl = document.getElementById('countdown-bar');
+  numEl.textContent = n;
+  barEl.style.transition = 'none';
+  barEl.style.width = '100%';
+  clearInterval(countdownTimer);
+  setTimeout(() => {
+    barEl.style.transition = 'width 1s linear';
+    barEl.style.width = ((n - 1) / secs * 100) + '%';
+    countdownTimer = setInterval(() => {
+      n--;
+      numEl.textContent = n;
+      barEl.style.width = (Math.max(0, (n - 1) / secs) * 100) + '%';
+      if (n <= 0) { clearInterval(countdownTimer); setTimeout(onDone, 400); }
+    }, 1000);
+  }, 50);
+}
+
 /* ════ CONFETTI ════ */
+  let confettiAnim = null;
+let confettiParticles = [];
+
+function launchConfetti(accentColor) {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = [accentColor, '#fff', '#fbbf24', '#34d399'];
+  confettiParticles = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width, y: -20,
+    w: Math.random() * 10 + 4, h: Math.random() * 6 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 8,
+    vy: Math.random() * 3 + 2, vx: (Math.random() - 0.5) * 3,
+    alpha: 1
+  }));
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      p.y += p.vy; p.x += p.vx; p.rot += p.rotV;
+      if (p.y > canvas.height * 0.7) p.alpha = Math.max(0, p.alpha - 0.015);
+      ctx.save(); ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    confettiParticles = confettiParticles.filter(p => p.alpha > 0);
+    if (confettiParticles.length > 0) confettiAnim = requestAnimationFrame(draw);
+  }
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiAnim = requestAnimationFrame(draw);
+}
+
+function stopConfetti() {
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiParticles = [];
+}
 /* ════ COUNTDOWN SOUND ════ */
 let audioCtx = null;
 let tickInterval = null;
