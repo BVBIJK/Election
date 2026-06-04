@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vote Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2129;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --text: #f0f0f0;
+      --muted: #7a7f8e;
+      --accent: #5ee8a0;
+      --accent2: #4fd4ff;
+      --accent3: #ff7eb6;
+      --warn: #f5c542;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-family: var(--font-head);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    header h1 span { color: var(--accent); }
+
+
+    /* ── Refresh bar ── */
+    #refresh-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    #load-btn {
+      background: var(--accent);
+      color: #0d0f14;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.45rem 1.25rem;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #load-btn:hover { opacity: 0.85; }
+    #load-btn:active { transform: scale(0.97); }
+    #load-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #refresh-bar span { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+    /* ── Main layout ── */
+    main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Status / Error ── */
+    #status-msg {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    #status-msg.info { background: rgba(78,212,255,0.08); color: var(--accent2); border: 1px solid rgba(78,212,255,0.2); }
+    #status-msg.error { background: rgba(255,80,80,0.08); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.2); }
+    #status-msg.success { background: rgba(94,232,160,0.08); color: var(--accent); border: 1px solid rgba(94,232,160,0.2); }
+
+    /* ── Summary cards ── */
+    #summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .stat-card .s-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .stat-card .s-val {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .s-val.green { color: var(--accent); }
+    .stat-card .s-val.blue { color: var(--accent2); }
+    .stat-card .s-val.pink { color: var(--accent3); }
+    .stat-card .s-val.warn { color: var(--warn); }
+
+    /* ── Section title ── */
+    .sec-title {
+      font-family: var(--font-head);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Category blocks ── */
+    #categories-wrap { margin-bottom: 2.5rem; }
+    .category-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .cat-name {
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .cat-total {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ── Candidate rows ── */
+    .cand-row {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 1rem;
+    }
+    .cand-row:last-child { border-bottom: none; }
+    .cand-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .cand-bar-wrap {
+      width: 200px;
+      height: 6px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .cand-bar {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    }
+    .cand-count {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-width: 36px;
+      text-align: right;
+      color: var(--text);
+    }
+    .winner-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      background: rgba(94,232,160,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(94,232,160,0.3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      margin-left: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── Node log ── */
+    #node-log-wrap { margin-bottom: 2.5rem; }
+    #node-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #node-table thead tr { background: var(--surface2); }
+    #node-table th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 0.65rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    #node-table td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    #node-table tr:last-child td { border-bottom: none; }
+    #node-table .ok { color: var(--accent); }
+    #node-table .fail { color: #ff6b6b; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(94,232,160,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Placeholder ── */
+    #placeholder {
+      text-align: center;
+      padding: 5rem 2rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    #placeholder .big { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: rgba(255,255,255,0.1); margin-bottom: 0.5rem; }
+
+    @media (max-width: 600px) {
+      main { padding: 1rem; }
+      .cand-bar-wrap { width: 90px; }
+
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Vote <span>Admin</span></h1>
+</header>
+
+<div id="refresh-bar">
+  <button id="load-btn" onclick="loadAll()">↻ Refresh Votes</button>
+  <span id="last-refresh">not loaded yet</span>
+</div>
+
+<main>
+  <div id="status-msg"></div>
+  <div id="placeholder">
+    <div class="big">🗳</div>
+    Enter your GitHub details above and click <strong>Load Votes</strong>
+  </div>
+  <div id="dashboard" style="display:none">
+    <div id="summary-grid"></div>
+    <div id="categories-wrap">
+      <div class="sec-title">Results by Category</div>
+      <div id="cat-blocks"></div>
+    </div>
+    <div id="node-log-wrap">
+      <div class="sec-title">Node File Log</div>
+      <table id="node-table">
+        <thead><tr>
+          <th>File</th><th>Node</th><th>Records</th><th>Status</th><th>Exported At</th>
+        </tr></thead>
+        <tbody id="node-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const BAR_COLORS = ['#5ee8a0','#4fd4ff','#ff7eb6','#f5c542','#c084fc','#fb923c','#38bdf8','#a3e635'];
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = type;
+  el.style.display = 'block';
+}
+function hideStatus() { document.getElementById('status-msg').style.display = 'none'; }
+
+// Fetch a single CSV by relative path
+async function fetchCsv(path) {
+  const res = await fetch(path + '?t=' + Date.now());
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+  return res.text();
+}
+
+// Discover all CSVs in votes/ via the GitHub Contents API using the current repo
+async function discoverCsvPaths() {
+  // Derive owner/repo from the GitHub Pages URL: https://owner.github.io/repo/
+  const parts = location.hostname.split('.');
+  const owner = parts[0];
+  const pathParts = location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  const repo = pathParts[0] || '';
+
+  if (!repo) throw new Error("Could not detect repo name from URL. Make sure GitHub Pages is served from a /repo path.");
+
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/votes`;
+  const res = await fetch(apiUrl);
+  if (!res.ok) throw new Error(`GitHub API error ${res.status} — make sure the repo is public.`);
+  const files = await res.json();
+  return files.filter(f => f.name.endsWith('.csv')).map(f => `votes/${f.name}`);
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+
+function nodeNameFromPath(path) {
+  const fname = path.split('/').pop();
+  const match = fname.match(/Node_(\d+)/i);
+  return match ? `Node ${match[1]}` : fname;
+}
+
+async function loadAll() {
+  const btn = document.getElementById('load-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Loading…';
+  showStatus('Discovering CSV files…', 'info');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'none';
+
+  try {
+    const paths = await discoverCsvPaths();
+    if (paths.length === 0) {
+      showStatus('No CSV files found in the votes/ folder.', 'error');
+      document.getElementById('placeholder').style.display = 'block';
+      btn.disabled = false; btn.textContent = '↻ Refresh Votes'; return;
+    }
+
+    showStatus(`Found ${paths.length} file(s). Fetching…`, 'info');
+
+    const nodeLog = [];
+    const allRecords = [];
+
+    for (const path of paths) {
+      const fname = path.split('/').pop();
+      const node = nodeNameFromPath(path);
+      try {
+        const raw = await fetchCsv(path);
+        const records = parseCsv(raw);
+        const latestExport = records.map(r => r['Exported At']).filter(Boolean).sort().pop() || '—';
+        nodeLog.push({ file: fname, node, count: records.length, status: 'ok', exported: latestExport });
+        allRecords.push(...records);
+      } catch (e) {
+        nodeLog.push({ file: fname, node, count: 0, status: 'fail', exported: '—' });
+      }
+    }
+
+    renderDashboard(allRecords, nodeLog, paths.length);
+    hideStatus();
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('last-refresh').textContent = 'last refreshed ' + new Date().toLocaleTimeString();
+
+  } catch (e) {
+    showStatus('Error: ' + e.message, 'error');
+    document.getElementById('placeholder').style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '↻ Refresh Votes';
+}
+
+// Auto-load on page open
+window.addEventListener('load', loadAll);
+
+function renderDashboard(records, nodeLog, totalFiles) {
+  // ── Aggregate by Category → Name ──
+  const catMap = {};
+  records.forEach(r => {
+    const cat = r['Category'] || 'Unknown';
+    const name = r['Name'] || 'Unknown';
+    const votes = parseInt(r['Votes']) || 0;
+    if (!catMap[cat]) catMap[cat] = {};
+    if (!catMap[cat][name]) catMap[cat][name] = 0;
+    catMap[cat][name] += votes;
+  });
+
+  const categories = Object.keys(catMap);
+  let totalVotes = 0;
+  records.forEach(r => { totalVotes += parseInt(r['Votes']) || 0; });
+
+  // ── Summary ──
+  const grid = document.getElementById('summary-grid');
+  grid.innerHTML = `
+    <div class="stat-card"><div class="s-label">Total Votes Cast</div><div class="s-val green">${totalVotes}</div></div>
+    <div class="stat-card"><div class="s-label">Nodes Loaded</div><div class="s-val blue">${totalFiles}</div></div>
+    <div class="stat-card"><div class="s-label">Categories</div><div class="s-val pink">${categories.length}</div></div>
+    <div class="stat-card"><div class="s-label">Candidates</div><div class="s-val warn">${new Set(records.map(r=>r['Name'])).size}</div></div>
+  `;
+
+  // ── Category blocks ──
+  const catWrap = document.getElementById('cat-blocks');
+  catWrap.innerHTML = '';
+  categories.forEach((cat, ci) => {
+    const nameMap = catMap[cat];
+    const catTotal = Object.values(nameMap).reduce((a,b)=>a+b,0);
+    const sorted = Object.entries(nameMap).sort((a,b) => b[1]-a[1]);
+    const maxVotes = sorted[0]?.[1] || 1;
+    const color = BAR_COLORS[ci % BAR_COLORS.length];
+
+    const block = document.createElement('div');
+    block.className = 'category-block';
+    block.innerHTML = `
+      <div class="cat-header">
+        <span class="cat-name">${cat}</span>
+        <span class="cat-total">${catTotal} total votes · ${sorted.length} candidate${sorted.length!==1?'s':''}</span>
+      </div>
+    `;
+    sorted.forEach(([name, votes], idx) => {
+      const pct = Math.round((votes / maxVotes) * 100);
+      const isWinner = idx === 0;
+      const row = document.createElement('div');
+      row.className = 'cand-row';
+      row.innerHTML = `
+        <div class="cand-name">
+          ${name}${isWinner ? '<span class="winner-badge">leading</span>' : ''}
+        </div>
+        <div class="cand-bar-wrap">
+          <div class="cand-bar" style="width:${pct}%;background:${color}${isWinner?'':'88'}"></div>
+        </div>
+        <div class="cand-count" style="color:${color}">${votes}</div>
+      `;
+      block.appendChild(row);
+    });
+    catWrap.appendChild(block);
+  });
+
+  // ── Node log ──
+  const tbody = document.getElementById('node-tbody');
+  tbody.innerHTML = '';
+  nodeLog.forEach(n => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${n.file}</td>
+      <td>${n.node}</td>
+      <td>${n.count}</td>
+      <td class="${n.status==='ok'?'ok':'fail'}">${n.status==='ok'?'✓ ok':'✗ failed'}</td>
+      <td>${n.exported}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
