@@ -45,14 +45,14 @@
       width:100%;height:46px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
       border-radius:10px;color:#fff;font-family:var(--mono);font-size:1rem;letter-spacing:0.12em;
       text-align:center;padding:0 3rem;outline:none;transition:border-color 0.15s,background 0.15s;
-      -webkit-text-security:disc;
     }
+    #gate-input[type="password"] { letter-spacing: 0.2em; }
     #gate-input::placeholder{letter-spacing:0.04em;color:rgba(255,255,255,0.3);font-family:var(--font);}
     #gate-input:focus{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);}
     #gate-input.shake{animation:shake 0.35s ease;}
     @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}50%{transform:translateX(6px);}}
     #gate-input.error{border-color:rgba(239,68,68,0.6);background:rgba(239,68,68,0.08);}
-    #gate-toggle { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);font-size:18px;padding:4px;transition:color 0.15s;font-family:sans-serif; }
+    #gate-toggle { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.35);font-size:18px;padding:4px;transition:color 0.15s;line-height:1; }
     #gate-toggle:hover{color:rgba(255,255,255,0.7);}
     #gate-error { font-size:0.75rem;color:#f87171;margin-bottom:0.75rem;min-height:1rem;font-family:var(--mono); }
     #gate-btn { width:100%;height:46px;background:var(--blue-600);border:none;border-radius:10px;color:#fff;font-family:var(--font);font-size:0.9rem;font-weight:700;cursor:pointer;transition:background 0.15s,transform 0.1s;letter-spacing:0.02em; }
@@ -81,6 +81,14 @@
     #toolbar-note{font-size:0.75rem;color:var(--muted);font-family:var(--mono);}
     .toolbar-sep{width:1px;height:24px;background:var(--border);}
 
+    /* ── Repo config ── */
+    #repo-config-wrap { display:flex;align-items:center;gap:8px; }
+    #repo-config-wrap label { font-size:0.75rem;color:var(--text2);font-weight:600; white-space:nowrap; }
+    #repo-input { font-family:var(--mono);font-size:0.75rem;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--surface2);color:var(--text);outline:none;width:220px; }
+    #repo-input:focus { border-color:var(--accent); }
+    #repo-input.repo-ok { border-color:var(--ok-border); background:var(--ok-bg); }
+    #repo-input.repo-err { border-color:var(--err-border); background:var(--err-bg); }
+
     /* ── Auto-refresh ── */
     .auto-refresh-wrap { display:flex;align-items:center;gap:8px;margin-left:auto; }
     .auto-refresh-wrap label { font-size:0.75rem;color:var(--text2);font-weight:600; }
@@ -89,7 +97,7 @@
     #auto-refresh-toggle.active { background:#dcfce7;border-color:#86efac;color:#15803d; }
     #auto-refresh-countdown { font-family:var(--mono);font-size:0.7rem;color:var(--muted);min-width:60px; }
 
-    /* ── Reveal setup ── */
+    /* ── Reveal Setup ── */
     #reveal-setup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;display:none;}
     #reveal-setup h3{font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
     .reveal-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;}
@@ -103,6 +111,14 @@
     .photo-preview{width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 0.5rem;display:block;border:3px solid var(--blue-200);}
     .photo-label{font-size:0.75rem;color:var(--muted);}
     .photo-hint{font-size:0.68rem;color:var(--muted);margin-top:4px;}
+
+    /* ── Category → role mapping ── */
+    #cat-role-section { display:none; margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem; }
+    #cat-role-section h4 { font-size:0.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.6rem; }
+    .cat-role-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px; }
+    .cat-role-row { display:flex;align-items:center;gap:8px; }
+    .cat-role-row label { font-size:0.72rem;font-family:var(--mono);color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .cat-role-row select { font-family:var(--mono);font-size:0.7rem;border:1px solid var(--border);border-radius:5px;padding:2px 6px;background:var(--surface2);color:var(--text);cursor:pointer;outline:none; }
 
     /* ── Main ── */
     main{padding:1.75rem 2rem;max-width:1100px;margin:0 auto;}
@@ -171,8 +187,11 @@
     .cat-header-left{display:flex;align-items:center;gap:10px;}
     .cat-name{font-size:0.9rem;font-weight:700;color:var(--text);}
     .cat-pill{font-family:var(--mono);font-size:0.65rem;font-weight:500;background:var(--blue-50);color:var(--blue-700);border:1px solid var(--blue-200);border-radius:99px;padding:2px 10px;}
+    .cat-header-right { display:flex;align-items:center;gap:8px; }
     .cat-toggle-btn{font-size:0.7rem;font-weight:600;font-family:var(--font);background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:4px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
     .cat-toggle-btn:hover{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-600);}
+    .cat-reveal-btn { font-size:0.7rem;font-weight:600;font-family:var(--font);background:#0f172a;border:1px solid #1e293b;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;transition:all 0.15s;white-space:nowrap; }
+    .cat-reveal-btn:hover { background:#1e293b; }
     .cand-row{padding:0.8rem 1.25rem;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 240px 60px;align-items:center;gap:1rem;}
     .cand-row:last-child{border-bottom:none;}
     .cand-name-wrap{display:flex;align-items:center;gap:8px;}
@@ -191,7 +210,7 @@
     .node-breakdown.open{display:block;}
     .nb-header-row{padding:0.6rem 1.25rem;font-size:0.68rem;font-weight:700;color:var(--blue-700);text-transform:uppercase;letter-spacing:0.08em;background:var(--blue-50);border-bottom:1px solid var(--blue-100);}
     .node-breakdown table{width:100%;border-collapse:collapse;font-size:0.75rem;}
-    .node-breakdown th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0.5rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:500;background:var(--surface2);}
+    .node-breakdown th{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:0.5rem 1rem;text-align:left;border-bottom:1px solid var(--border);font-weight:500;background:var(--surface2);position:sticky;top:0;}
     .node-breakdown td{padding:0.5rem 1rem;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--text2);}
     .node-breakdown tr:last-child td{border-bottom:none;}
     .nb-cand-cell{font-weight:600;color:var(--text);}
@@ -231,35 +250,96 @@
     #placeholder .icon{font-size:3rem;margin-bottom:1rem;opacity:0.25;}
     #placeholder p{font-size:0.875rem;color:var(--muted);line-height:1.7;}
 
-    /* ── Reveal overlay ── */
-    #reveal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
-    #reveal-overlay.active{display:flex;}
-    #confetti-canvas{position:absolute;inset:0;pointer-events:none;}
-    #reveal-close{position:absolute;top:1.5rem;right:1.5rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:8px;font-family:var(--font);font-size:0.8rem;font-weight:600;padding:0.4rem 0.9rem;cursor:pointer;transition:background 0.15s;z-index:2;}
-    #reveal-close:hover{background:rgba(255,255,255,0.2);}
-    #screen-countdown{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;}
-    .reveal-eyebrow{font-family:var(--font);font-size:1rem;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.4);}
-    #countdown-number{font-family:var(--display);font-size:min(40vw,320px);line-height:1;color:#fff;animation:pulse-num 1s ease-in-out infinite;}
-    @keyframes pulse-num{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(0.95);}}
-    .countdown-bar-wrap{width:300px;height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:0.5rem;}
-    .countdown-bar-fill{height:100%;background:#fff;border-radius:99px;transition:width 1s linear;}
-    #screen-winner{display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center;padding:2rem;}
-    .winner-title{font-family:var(--font);font-size:0.9rem;font-weight:700;letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,255,255,0.5);}
-    .winner-photo-wrap{position:relative;}
-    .winner-photo{width:180px;height:180px;border-radius:50%;object-fit:cover;border:4px solid #fff;display:none;animation:pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-    .winner-photo.visible{display:block;}
-    .winner-photo-placeholder{width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.08);border:4px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:4rem;}
-    @keyframes pop-in{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
-    .winner-name{font-family:var(--display);font-size:min(14vw,110px);line-height:1;color:#fff;letter-spacing:0.02em;animation:slide-up 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards;opacity:0;}
-    @keyframes slide-up{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
-    .winner-votes{font-family:var(--mono);font-size:1rem;color:rgba(255,255,255,0.4);animation:slide-up 0.7s 0.15s cubic-bezier(0.34,1.56,0.64,1) forwards;opacity:0;}
-    .winner-category-badge{font-family:var(--font);font-size:0.75rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:0.4rem 1.25rem;border-radius:99px;border:1px solid;animation:slide-up 0.7s 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;opacity:0;}
-    .badge-boy{background:rgba(37,99,235,0.25);border-color:rgba(37,99,235,0.6);color:#93c5fd;}
-    .badge-girl{background:rgba(219,39,119,0.25);border-color:rgba(219,39,119,0.6);color:#f9a8d4;}
-    .badge-aboy{background:rgba(8,145,178,0.25);border-color:rgba(8,145,178,0.6);color:#67e8f9;}
-    .badge-agirl{background:rgba(168,85,247,0.25);border-color:rgba(168,85,247,0.6);color:#d8b4fe;}
-    #reveal-next{position:absolute;bottom:2rem;right:2rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:600;padding:0.5rem 1.2rem;cursor:pointer;transition:background 0.15s;display:none;z-index:2;}
-    #reveal-next:hover{background:rgba(255,255,255,0.2);}
+    /* ══════════════════════════════════════════
+       REVEAL OVERLAY — fully rewritten
+    ══════════════════════════════════════════ */
+    #reveal-overlay {
+      display:none;position:fixed;inset:0;z-index:9999;
+      background:#000;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
+    }
+    #reveal-overlay.active { display:flex; }
+    #confetti-canvas { position:absolute;inset:0;pointer-events:none; }
+
+    /* Close / Next buttons */
+    #reveal-close {
+      position:absolute;top:1.5rem;right:1.5rem;
+      background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+      color:#fff;border-radius:8px;font-family:var(--font);font-size:0.8rem;font-weight:600;
+      padding:0.4rem 0.9rem;cursor:pointer;transition:background 0.15s;z-index:2;
+    }
+    #reveal-close:hover { background:rgba(255,255,255,0.2); }
+    #reveal-next {
+      position:absolute;bottom:2rem;right:2rem;
+      background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);
+      color:#fff;border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:600;
+      padding:0.5rem 1.2rem;cursor:pointer;transition:background 0.15s;display:none;z-index:2;
+    }
+    #reveal-next:hover { background:rgba(255,255,255,0.2); }
+    #reveal-prev {
+      position:absolute;bottom:2rem;left:2rem;
+      background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
+      color:rgba(255,255,255,0.5);border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:600;
+      padding:0.5rem 1.2rem;cursor:pointer;transition:all 0.15s;display:none;z-index:2;
+    }
+    #reveal-prev:hover { background:rgba(255,255,255,0.15);color:#fff; }
+
+    /* Progress dots */
+    #reveal-progress {
+      position:absolute;top:1.5rem;left:50%;transform:translateX(-50%);
+      display:flex;gap:8px;z-index:2;
+    }
+    .rev-dot {
+      width:8px;height:8px;border-radius:50%;
+      background:rgba(255,255,255,0.2);transition:all 0.3s;
+    }
+    .rev-dot.done { background:rgba(255,255,255,0.5); }
+    .rev-dot.current { background:#fff;transform:scale(1.3); }
+
+    /* Countdown screen */
+    #screen-countdown { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem; }
+    .reveal-eyebrow { font-family:var(--font);font-size:1rem;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.4); }
+    #countdown-number { font-family:var(--display);font-size:min(40vw,320px);line-height:1;color:#fff; }
+    /* FIX: use CSS animation with key-based restart via custom property */
+    #countdown-number.counting { animation:pulse-num 1s ease-in-out infinite; }
+    @keyframes pulse-num { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(0.95);} }
+    .countdown-bar-wrap { width:300px;height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:0.5rem; }
+    #countdown-bar { height:100%;background:#fff;border-radius:99px; /* no transition here, set via JS */ }
+
+    /* Winner screen */
+    #screen-winner { display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center;padding:2rem; }
+    .winner-title { font-family:var(--font);font-size:0.9rem;font-weight:700;letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,255,255,0.5); }
+    .winner-photo-wrap { position:relative; }
+
+    /* FIX: photo animation resets by toggling a class each time */
+    .winner-photo {
+      width:180px;height:180px;border-radius:50%;object-fit:cover;
+      border:4px solid #fff;display:block;
+    }
+    .winner-photo.animate { animation:pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .winner-photo-placeholder {
+      width:180px;height:180px;border-radius:50%;
+      background:rgba(255,255,255,0.08);border:4px solid rgba(255,255,255,0.2);
+      display:flex;align-items:center;justify-content:center;font-size:4rem;
+    }
+    @keyframes pop-in { from{transform:scale(0.5);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+    .winner-name {
+      font-family:var(--display);font-size:min(14vw,110px);line-height:1;color:#fff;letter-spacing:0.02em;
+    }
+    .winner-name.animate { animation:slide-up 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .winner-votes { font-family:var(--mono);font-size:1rem;color:rgba(255,255,255,0.4); }
+    .winner-votes.animate { animation:slide-up 0.7s 0.15s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .winner-category-badge {
+      font-family:var(--font);font-size:0.75rem;font-weight:700;letter-spacing:0.2em;
+      text-transform:uppercase;padding:0.4rem 1.25rem;border-radius:99px;border:1px solid;
+    }
+    .winner-category-badge.animate { animation:slide-up 0.7s 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes slide-up { from{opacity:0;transform:translateY(40px);} to{opacity:1;transform:translateY(0);} }
+    .badge-boy   { background:rgba(37,99,235,0.25);border-color:rgba(37,99,235,0.6);color:#93c5fd; }
+    .badge-girl  { background:rgba(219,39,119,0.25);border-color:rgba(219,39,119,0.6);color:#f9a8d4; }
+    .badge-aboy  { background:rgba(8,145,178,0.25);border-color:rgba(8,145,178,0.6);color:#67e8f9; }
+    .badge-agirl { background:rgba(168,85,247,0.25);border-color:rgba(168,85,247,0.6);color:#d8b4fe; }
+    .badge-other { background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3);color:#fff; }
 
     @media(max-width:900px){.reveal-grid{grid-template-columns:1fr 1fr;}}
     @media(max-width:640px){main{padding:1rem;}header{padding:0 1rem;}#toolbar{padding:0.7rem 1rem;}.cand-row{grid-template-columns:1fr auto;}.bar-cell{display:none;}.reveal-grid{grid-template-columns:1fr;}.gate-box{margin:1rem;}.auto-refresh-wrap{margin-left:0;}}
@@ -274,7 +354,9 @@
     <div class="gate-title">Admin Access Only</div>
     <div class="gate-sub">This panel is restricted to authorised staff.<br>Students are not permitted to enter.</div>
     <div class="gate-input-wrap">
-      <input type="password" id="gate-input" placeholder="Enter password" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkPassword()" />
+      <input type="password" id="gate-input" placeholder="Enter password"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter')checkPassword()" />
       <button id="gate-toggle" onclick="toggleGateVisibility()" title="Show/hide">👁</button>
     </div>
     <div id="gate-error"></div>
@@ -287,21 +369,27 @@
 <div id="reveal-overlay">
   <canvas id="confetti-canvas"></canvas>
   <button id="reveal-close" onclick="closeReveal()">✕ Close</button>
+  <div id="reveal-progress"></div>
+  <button id="reveal-prev" onclick="revealPrev()">← Previous</button>
   <button id="reveal-next" onclick="revealNext()">Reveal Next →</button>
+
   <div id="screen-countdown">
     <div class="reveal-eyebrow" id="countdown-label">Announcing…</div>
     <div id="countdown-number">10</div>
-    <div class="countdown-bar-wrap"><div class="countdown-bar-fill" id="countdown-bar" style="width:100%"></div></div>
+    <div class="countdown-bar-wrap">
+      <div id="countdown-bar" style="width:100%"></div>
+    </div>
   </div>
+
   <div id="screen-winner">
     <div class="winner-title" id="winner-title-label">Winner</div>
     <div class="winner-photo-wrap">
-      <img id="winner-photo" class="winner-photo" src="" alt="Winner" />
+      <img id="winner-photo" class="winner-photo" src="" alt="Winner" style="display:none" />
       <div id="winner-photo-placeholder" class="winner-photo-placeholder">🏆</div>
     </div>
     <div class="winner-name" id="winner-name-text">—</div>
     <div class="winner-votes" id="winner-votes-text">— votes</div>
-    <div class="winner-category-badge badge-boy" id="winner-cat-badge">Winner</div>
+    <div class="winner-category-badge badge-other" id="winner-cat-badge">Winner</div>
   </div>
 </div>
 
@@ -319,7 +407,13 @@
   <button id="load-btn" class="tbtn" onclick="loadAll()"><span>↻</span> Refresh Votes</button>
   <div class="toolbar-sep"></div>
   <button class="tbtn tbtn-reveal" onclick="startRevealAll()">🎙 Reveal All Winners</button>
-  <span id="toolbar-note">auto-discovers all CSVs from votes/</span>
+  <div class="toolbar-sep"></div>
+  <!-- Repo config -->
+  <div id="repo-config-wrap">
+    <label>Repo:</label>
+    <input type="text" id="repo-input" placeholder="owner/repo-name" title="GitHub owner/repo (e.g. myschool/election-2025)" />
+  </div>
+  <span id="toolbar-note" style="font-size:0.72rem;color:var(--muted);font-family:var(--mono);">auto-discovers all CSVs from votes/</span>
   <div class="auto-refresh-wrap">
     <label>Auto-refresh:</label>
     <select id="auto-refresh-interval" onchange="if(autoRefreshActive){stopAutoRefresh();startAutoRefresh();}">
@@ -348,7 +442,7 @@
 
   <!-- Reveal Setup -->
   <div id="reveal-setup">
-    <h3>🎭 Reveal Setup — Candidate Photos</h3>
+    <h3>🎭 Reveal Setup — Candidate Photos &amp; Role Mapping</h3>
     <div class="reveal-grid">
       <div class="reveal-card">
         <h4><span class="dot dot-boy"></span> Head Boy photo</h4>
@@ -390,6 +484,11 @@
           <div class="photo-hint">PNG, JPG — shown on reveal screen</div>
         </div>
       </div>
+    </div>
+    <!-- Category → Role mapping (populated after load) -->
+    <div id="cat-role-section">
+      <h4>Category → Role mapping <span style="font-weight:400;color:var(--muted);font-size:0.65rem;text-transform:none;letter-spacing:0">(used to pick the right photo on reveal)</span></h4>
+      <div class="cat-role-grid" id="cat-role-grid"></div>
     </div>
   </div>
 
@@ -437,7 +536,9 @@
 </main>
 
 <script>
-/* ════ PASSWORD GATE ════ */
+/* ════════════════════════════════════════════
+   PASSWORD GATE
+════════════════════════════════════════════ */
 const ADMIN_PASSWORD = 'admin2025';
 const MAX_ATTEMPTS = 5;
 let gateAttempts = 0, gateLocked = false;
@@ -467,7 +568,8 @@ function checkPassword() {
       input.disabled = true;
     } else {
       document.getElementById('gate-error').textContent = 'Incorrect password.';
-      document.getElementById('gate-attempts-msg').textContent = remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining';
+      document.getElementById('gate-attempts-msg').textContent =
+        remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining';
     }
     input.value = ''; input.focus();
   }
@@ -483,14 +585,14 @@ function toggleGateVisibility() {
 }
 window.addEventListener('load', () => document.getElementById('gate-input').focus());
 
-/* ════ AUTO-REFRESH ════ */
+/* ════════════════════════════════════════════
+   AUTO-REFRESH
+════════════════════════════════════════════ */
 let autoRefreshActive = false;
 let autoRefreshCountdownTimer = null;
 let autoRefreshSecsLeft = 0;
 
-function toggleAutoRefresh() {
-  autoRefreshActive ? stopAutoRefresh() : startAutoRefresh();
-}
+function toggleAutoRefresh() { autoRefreshActive ? stopAutoRefresh() : startAutoRefresh(); }
 function startAutoRefresh() {
   autoRefreshActive = true;
   const btn = document.getElementById('auto-refresh-toggle');
@@ -503,6 +605,8 @@ function tickAutoRefresh() {
   updateARDisplay();
   clearInterval(autoRefreshCountdownTimer);
   autoRefreshCountdownTimer = setInterval(() => {
+    // Pause countdown while reveal is open
+    if (document.getElementById('reveal-overlay').classList.contains('active')) return;
     autoRefreshSecsLeft--;
     updateARDisplay();
     if (autoRefreshSecsLeft <= 0) {
@@ -524,13 +628,20 @@ function updateARDisplay() {
   document.getElementById('auto-refresh-countdown').textContent = s > 0 ? `next in ${s}s` : '';
 }
 
-/* ════ APP GLOBALS ════ */
+/* ════════════════════════════════════════════
+   APP GLOBALS
+════════════════════════════════════════════ */
 const BAR_COLORS = ['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#db2777','#65a30d'];
 let winnerData = {}, photoData = {};
+// catRoleMap: { 'HEAD BOY': 'boy', 'HEAD GIRL': 'girl', ... }
+// Populated by user via dropdowns; auto-guessed on load
+let catRoleMap = {};
 let revealCategories = [], revealIndex = 0, countdownTimer = null;
 let trendChartInstance = null, trendDataStore = {};
 
-/* ════ PHOTO HANDLER ════ */
+/* ════════════════════════════════════════════
+   PHOTO HANDLER
+════════════════════════════════════════════ */
 function handlePhoto(role, input) {
   if (!input.files[0]) return;
   const reader = new FileReader();
@@ -544,7 +655,9 @@ function handlePhoto(role, input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-/* ════ UTILS ════ */
+/* ════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════ */
 function showStatus(msg, type) {
   const el = document.getElementById('status-msg');
   el.textContent = msg; el.className = type; el.style.display = 'block';
@@ -556,30 +669,93 @@ async function fetchCsv(path) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
 }
+
+/* ─ Robust GitHub repo detection ─
+   Priority: 1) manual input field  2) URL path  3) error */
+function detectRepo() {
+  const manual = (document.getElementById('repo-input').value || '').trim();
+  if (manual && manual.includes('/')) return manual;
+
+  // Try to detect from GitHub Pages URL: username.github.io/reponame/...
+  const hostname = location.hostname; // e.g. "myschool.github.io"
+  const pathParts = location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  if (hostname.endsWith('.github.io') && pathParts.length >= 1) {
+    const owner = hostname.replace('.github.io', '');
+    const repo = pathParts[0];
+    return `${owner}/${repo}`;
+  }
+  // Running locally / non-GitHub-Pages — require manual entry
+  return null;
+}
+
 async function discoverCsvPaths() {
-  const owner = location.hostname.split('.')[0];
-  const repo = location.pathname.replace(/\/$/, '').split('/').filter(Boolean)[0] || '';
-  if (!repo) throw new Error('Could not detect repo name from URL.');
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/votes`);
-  if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
+  const repoPath = detectRepo();
+  if (!repoPath) {
+    throw new Error(
+      'Could not auto-detect GitHub repo. Enter "owner/repo-name" in the Repo field in the toolbar.'
+    );
+  }
+  document.getElementById('repo-input').value = repoPath;
+  document.getElementById('repo-input').classList.remove('repo-err');
+  document.getElementById('repo-input').classList.add('repo-ok');
+
+  const res = await fetch(`https://api.github.com/repos/${repoPath}/contents/votes`);
+  if (!res.ok) {
+    document.getElementById('repo-input').classList.remove('repo-ok');
+    document.getElementById('repo-input').classList.add('repo-err');
+    throw new Error(`GitHub API error ${res.status} for repo "${repoPath}". Check the Repo field.`);
+  }
   const files = await res.json();
   return files.filter(f => f.name.endsWith('.csv')).map(f => `votes/${f.name}`);
 }
+
+/* ─ RFC-4180 compliant CSV parser (handles quoted fields, \r\n, commas in values) ─ */
 function parseCsv(text) {
+  // Normalise line endings
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = text.trim().split('\n').filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
+
+  function parseRow(line) {
+    const fields = [];
+    let i = 0, cur = '';
+    while (i < line.length) {
+      if (line[i] === '"') {
+        i++; // skip opening quote
+        while (i < line.length) {
+          if (line[i] === '"' && line[i + 1] === '"') { cur += '"'; i += 2; }
+          else if (line[i] === '"') { i++; break; }
+          else { cur += line[i++]; }
+        }
+        // skip comma or end
+        if (line[i] === ',') i++;
+      } else {
+        const end = line.indexOf(',', i);
+        if (end === -1) { cur += line.slice(i); i = line.length; }
+        else { cur += line.slice(i, end); i = end + 1; }
+      }
+      fields.push(cur.trim()); cur = '';
+    }
+    return fields;
+  }
+
+  const headers = parseRow(lines[0]);
   return lines.slice(1).map(line => {
-    const vals = line.split(',').map(v => v.trim());
-    const obj = {}; headers.forEach((h, i) => obj[h] = vals[i] || ''); return obj;
+    const vals = parseRow(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] !== undefined ? vals[i] : '');
+    return obj;
   });
 }
+
 function nodeNameFromPath(path) {
-  const m = path.split('/').pop().match(/Node_(\d+)/i);
-  return m ? `Node ${m[1]}` : path.split('/').pop();
+  const m = path.split('/').pop().match(/Node[_\s-]?(\d+)/i);
+  return m ? `Node ${m[1]}` : path.split('/').pop().replace('.csv', '');
 }
 
-/* ════ DUPLICATE DETECTION ════ */
+/* ════════════════════════════════════════════
+   DUPLICATE DETECTION
+════════════════════════════════════════════ */
 function detectDuplicates(catNodeData) {
   const dups = [];
   Object.entries(catNodeData).forEach(([cat, nodeData]) => {
@@ -609,7 +785,56 @@ function renderDuplicateWarning(dups) {
     </div>`).join('');
 }
 
-/* ════ NODE HEALTH ════ */
+/* ════════════════════════════════════════════
+   ROLE DETECTION — robust pattern matching
+   Returns: 'boy' | 'girl' | 'aboy' | 'agirl' | null
+════════════════════════════════════════════ */
+function guessRoleForCategory(cat) {
+  const u = cat.toUpperCase();
+  const isAsst = /\bASS?T\b|ASSISTANT|DEPUTY|VICE/.test(u);
+  const hasGirl = /\bGIRL\b|FEMALE|WOMEN?/.test(u);
+  const hasBoy  = /\bBOY\b|MALE|MEN?\b/.test(u);
+  if (isAsst && hasGirl) return 'agirl';
+  if (isAsst && hasBoy)  return 'aboy';
+  if (hasGirl)           return 'girl';
+  if (hasBoy)            return 'boy';
+  return null; // unknown — user must map manually
+}
+
+function buildCatRoleUI(categories) {
+  catRoleMap = {};
+  categories.forEach(cat => {
+    const guessed = catRoleMap[cat] || guessRoleForCategory(cat);
+    catRoleMap[cat] = guessed || 'none';
+  });
+
+  const section = document.getElementById('cat-role-section');
+  const grid = document.getElementById('cat-role-grid');
+  section.style.display = 'block';
+
+  const roleOptions = [
+    { val:'none',  label:'— none —' },
+    { val:'boy',   label:'Head Boy' },
+    { val:'girl',  label:'Head Girl' },
+    { val:'aboy',  label:'Asst. Head Boy' },
+    { val:'agirl', label:'Asst. Head Girl' },
+  ];
+
+  grid.innerHTML = categories.map(cat => {
+    const sel = catRoleMap[cat] || 'none';
+    const opts = roleOptions.map(o =>
+      `<option value="${o.val}"${sel === o.val ? ' selected' : ''}>${o.label}</option>`
+    ).join('');
+    return `<div class="cat-role-row">
+      <label title="${cat}">${cat}</label>
+      <select onchange="catRoleMap['${cat}']=this.value">${opts}</select>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════
+   NODE HEALTH
+════════════════════════════════════════════ */
 function renderNodeHealth(nodeLog) {
   document.getElementById('node-health-wrap').style.display = 'block';
   document.getElementById('node-health-grid').innerHTML = nodeLog.map(n => {
@@ -629,9 +854,10 @@ function renderNodeHealth(nodeLog) {
   }).join('');
 }
 
-/* ════ TREND CHART ════ */
+/* ════════════════════════════════════════════
+   TREND CHART
+════════════════════════════════════════════ */
 function buildTrendData(snapshots) {
-  // snapshots: [{node, timestamp, records[]}]
   const catData = {};
   const sorted = [...snapshots].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   sorted.forEach(snap => {
@@ -646,7 +872,6 @@ function buildTrendData(snapshots) {
   });
   return catData;
 }
-
 function renderTrendSection(catData, categories) {
   trendDataStore = catData;
   document.getElementById('trend-wrap').style.display = 'block';
@@ -667,9 +892,7 @@ function renderTrendChart(cat) {
   const catCands = trendDataStore[cat];
   if (!catCands) { emptyEl.style.display = 'block'; canvas.style.display = 'none'; return; }
   const allTs = [...new Set(Object.values(catCands).flatMap(pts => pts.map(p => p.ts)))].sort();
-  if (allTs.length < 2) {
-    emptyEl.style.display = 'block'; canvas.style.display = 'none'; return;
-  }
+  if (allTs.length < 2) { emptyEl.style.display = 'block'; canvas.style.display = 'none'; return; }
   emptyEl.style.display = 'none'; canvas.style.display = 'block';
   const datasets = Object.keys(catCands).map((name, i) => {
     const color = BAR_COLORS[i % BAR_COLORS.length];
@@ -677,29 +900,31 @@ function renderTrendChart(cat) {
     catCands[name].forEach(p => { tsMap[p.ts] = (tsMap[p.ts] || 0) + p.votes; });
     let last = 0;
     const data = allTs.map(ts => { if (tsMap[ts] !== undefined) last = tsMap[ts]; return last; });
-    return { label: name, data, borderColor: color, backgroundColor: color + '18', tension: 0.3, fill: false, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 };
+    return { label: name, data, borderColor: color, backgroundColor: color + '18',
+      tension: 0.3, fill: false, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 };
   });
   const labels = allTs.map(ts => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
   trendChartInstance = new Chart(canvas, {
-    type: 'line',
-    data: { labels, datasets },
+    type: 'line', data: { labels, datasets },
     options: {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { font: { family: "'JetBrains Mono',monospace", size: 11 }, color: '#4a5578', boxWidth: 12 } },
-        tooltip: { bodyFont: { family: "'JetBrains Mono',monospace" }, titleFont: { family: "'Plus Jakarta Sans',sans-serif" } }
+        legend: { labels: { font: { family:"'JetBrains Mono',monospace", size:11 }, color:'#4a5578', boxWidth:12 } },
+        tooltip: { bodyFont: { family:"'JetBrains Mono',monospace" }, titleFont: { family:"'Plus Jakarta Sans',sans-serif" } }
       },
       scales: {
-        x: { grid: { color: '#e2e8f4' }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 10 }, color: '#8a96b0' } },
-        y: { beginAtZero: true, grid: { color: '#e2e8f4' }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 10 }, color: '#8a96b0', stepSize: 1 } }
+        x: { grid:{color:'#e2e8f4'}, ticks:{font:{family:"'JetBrains Mono',monospace",size:10},color:'#8a96b0'} },
+        y: { beginAtZero:true, grid:{color:'#e2e8f4'}, ticks:{font:{family:"'JetBrains Mono',monospace",size:10},color:'#8a96b0',stepSize:1} }
       }
     }
   });
 }
 
-/* ════ PER-NODE BREAKDOWN ════ */
+/* ════════════════════════════════════════════
+   NODE BREAKDOWN
+════════════════════════════════════════════ */
 function buildNodeBreakdownHTML(catNodeData, allNodes) {
   const allCands = new Set();
   allNodes.forEach(n => { if (catNodeData[n]) Object.keys(catNodeData[n]).forEach(c => allCands.add(c)); });
@@ -715,9 +940,9 @@ function buildNodeBreakdownHTML(catNodeData, allNodes) {
     const total = activeNodes.reduce((s, n) => s + (catNodeData[n]?.[cand] || 0), 0);
     return `<tr><td class="nb-cand-cell">${cand}</td>${cells.join('')}<td class="nb-total-cell">${total}</td></tr>`;
   });
-  return `<div class="nb-header-row">Per-node vote breakdown</div><table><thead>${thead}</thead><tbody>${rows.join('')}</tbody></table>`;
+  return `<div class="nb-header-row">Per-node vote breakdown</div>
+    <table><thead>${thead}</thead><tbody>${rows.join('')}</tbody></table>`;
 }
-
 function toggleBreakdown(id, btn) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -725,7 +950,9 @@ function toggleBreakdown(id, btn) {
   btn.textContent = el.classList.contains('open') ? '⊟ Hide Breakdown' : '⊞ Node Breakdown';
 }
 
-/* ════ LOAD ════ */
+/* ════════════════════════════════════════════
+   LOAD
+════════════════════════════════════════════ */
 async function loadAll() {
   const btn = document.getElementById('load-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Loading…';
@@ -747,7 +974,6 @@ async function loadAll() {
     showStatus(`Found ${paths.length} file(s). Fetching…`, 'info');
 
     const nodeLog = [], allRecords = [], snapshots = [];
-    // catNodeData[cat][node][candidate] = votes
     const catNodeData = {};
 
     for (const path of paths) {
@@ -787,7 +1013,6 @@ async function loadAll() {
 }
 
 function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, allNodes) {
-  // Flat totals
   const catMap = {};
   records.forEach(r => {
     const cat = (r['Category'] || 'Unknown').toUpperCase();
@@ -805,24 +1030,19 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
     if (sorted[0]) winnerData[cat] = { name: sorted[0][0], votes: sorted[0][1] };
   });
 
-  // Node health
   renderNodeHealth(nodeLog);
-
-  // Duplicates
   renderDuplicateWarning(detectDuplicates(catNodeData));
+  buildCatRoleUI(categories);
 
-  // Summary stats
   document.getElementById('summary-grid').innerHTML = `
     <div class="stat-card c1"><div class="s-label">Total votes cast</div><div class="s-val">${totalVotes}</div></div>
     <div class="stat-card c2"><div class="s-label">Nodes loaded</div><div class="s-val">${totalFiles}</div></div>
     <div class="stat-card c3"><div class="s-label">Categories</div><div class="s-val">${categories.length}</div></div>
     <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => r['Name'])).size}</div></div>`;
 
-  // Trend
   const trendCatData = buildTrendData(snapshots);
   if (snapshots.length >= 2) renderTrendSection(trendCatData, categories);
 
-  // Category blocks
   const catWrap = document.getElementById('cat-blocks');
   catWrap.innerHTML = '';
   categories.forEach((cat, ci) => {
@@ -841,7 +1061,10 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
           <span class="cat-name">${cat}</span>
           <span class="cat-pill">${catTotal} votes · ${sorted.length} candidate${sorted.length !== 1 ? 's' : ''}</span>
         </div>
-        <button class="cat-toggle-btn" onclick="toggleBreakdown('${bdId}',this)">⊞ Node Breakdown</button>
+        <div class="cat-header-right">
+          <button class="cat-reveal-btn" onclick="startRevealCategory('${cat}')">🎙 Reveal</button>
+          <button class="cat-toggle-btn" onclick="toggleBreakdown('${bdId}',this)">⊞ Node Breakdown</button>
+        </div>
       </div>`;
 
     sorted.forEach(([name, votes], idx) => {
@@ -863,104 +1086,238 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
       block.appendChild(row);
     });
 
-    // Node breakdown panel
     const bd = document.createElement('div');
-    bd.className = 'node-breakdown';
-    bd.id = bdId;
+    bd.className = 'node-breakdown'; bd.id = bdId;
     bd.innerHTML = buildNodeBreakdownHTML(catNodeData[cat] || {}, allNodes);
     block.appendChild(bd);
     catWrap.appendChild(block);
   });
 
-  // Node log
   const tbody = document.getElementById('node-tbody');
   tbody.innerHTML = '';
   nodeLog.forEach(n => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="fname">${n.file}</td><td><span class="node-tag">${n.node}</span></td><td>${n.count}</td><td>${n.status === 'ok' ? '<span class="status-ok">✓ ok</span>' : '<span class="status-fail">✗ failed</span>'}</td><td>${n.exported}</td>`;
+    tr.innerHTML = `
+      <td class="fname">${n.file}</td>
+      <td><span class="node-tag">${n.node}</span></td>
+      <td>${n.count}</td>
+      <td>${n.status === 'ok' ? '<span class="status-ok">✓ ok</span>' : '<span class="status-fail">✗ failed</span>'}</td>
+      <td>${n.exported}</td>`;
     tbody.appendChild(tr);
   });
 }
 
-/* ════ REVEAL ════ */
+/* ════════════════════════════════════════════
+   REVEAL — fully rewritten
+
+   KEY FIXES:
+   1. Photo animation: remove .animate, force reflow, re-add — guarantees replay every time
+   2. Winner screen: hide/show photo correctly without leftover state
+   3. Countdown bar: set width without transition first, then animate
+   4. No more closeReveal+reopen flicker between categories
+   5. Progress dots track position
+   6. Role detection uses catRoleMap (user-configurable) as primary source
+════════════════════════════════════════════ */
 function startRevealAll() {
   revealCategories = Object.keys(winnerData);
   if (!revealCategories.length) { alert('Load votes first.'); return; }
-  revealIndex = 0; startReveal(revealCategories[0]);
+  revealIndex = 0;
+  openRevealOverlay();
+  startCountdownFor(revealIndex);
 }
-function startReveal(category) {
-  const cat = category.toUpperCase();
-  if (!winnerData[cat]) { alert(`No data for "${category}". Load votes first.`); return; }
+
+function startRevealCategory(cat) {
+  const key = cat.toUpperCase();
+  if (!winnerData[key]) { alert('Load votes first.'); return; }
+  revealCategories = [key];
+  revealIndex = 0;
+  openRevealOverlay();
+  startCountdownFor(0);
+}
+
+function openRevealOverlay() {
+  renderProgressDots();
   document.getElementById('reveal-overlay').classList.add('active');
+}
+
+function renderProgressDots() {
+  const wrap = document.getElementById('reveal-progress');
+  wrap.innerHTML = revealCategories.map((_, i) =>
+    `<div class="rev-dot${i === revealIndex ? ' current' : i < revealIndex ? ' done' : ''}"></div>`
+  ).join('');
+}
+
+function updateProgressDots() {
+  const dots = document.querySelectorAll('.rev-dot');
+  dots.forEach((d, i) => {
+    d.className = 'rev-dot' + (i === revealIndex ? ' current' : i < revealIndex ? ' done' : '');
+  });
+}
+
+function startCountdownFor(idx) {
+  const cat = revealCategories[idx];
+  // Switch to countdown screen (in-place, no overlay close/open)
   document.getElementById('screen-countdown').style.display = 'flex';
   document.getElementById('screen-winner').style.display = 'none';
   document.getElementById('reveal-next').style.display = 'none';
-  document.getElementById('countdown-label').textContent = 'Announcing ' + category;
+  document.getElementById('reveal-prev').style.display = 'none';
+  document.getElementById('countdown-label').textContent = 'Announcing ' + cat;
+  updateProgressDots();
   runCountdown(10, () => showWinner(cat));
 }
+
 function showWinner(cat) {
   const w = winnerData[cat];
-  const isGirl = cat.includes('GIRL') && !cat.includes('ASST') && !cat.includes('ASSISTANT');
-  const isAsstBoy = (cat.includes('ASST') || cat.includes('ASSISTANT')) && cat.includes('BOY');
-  const isAsstGirl = (cat.includes('ASST') || cat.includes('ASSISTANT')) && cat.includes('GIRL');
+  if (!w) return;
+
+  // Determine role from catRoleMap first, then fall back to auto-detect
+  const role = (catRoleMap[cat] && catRoleMap[cat] !== 'none')
+    ? catRoleMap[cat]
+    : guessRoleForCategory(cat);
+
+  // Badge class
+  const badgeClass = {
+    boy: 'badge-boy', girl: 'badge-girl',
+    aboy: 'badge-aboy', agirl: 'badge-agirl'
+  }[role] || 'badge-other';
+
+  // Confetti colour
+  const confettiColor = {
+    girl: '#f9a8d4', agirl: '#d8b4fe', aboy: '#67e8f9', boy: '#93c5fd'
+  }[role] || '#fff';
+
+  // Switch screens
   document.getElementById('screen-countdown').style.display = 'none';
-  document.getElementById('screen-winner').style.display = 'flex';
+  const ws = document.getElementById('screen-winner');
+  ws.style.display = 'flex';
+
+  // Set text
   document.getElementById('winner-title-label').textContent = cat;
   document.getElementById('winner-cat-badge').textContent = cat;
-  let bc = 'badge-boy';
-  if (isAsstBoy) bc = 'badge-aboy'; else if (isAsstGirl) bc = 'badge-agirl'; else if (isGirl) bc = 'badge-girl';
-  document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + bc;
-  const nameEl = document.getElementById('winner-name-text');
-  const votesEl = document.getElementById('winner-votes-text');
-  const badgeEl = document.getElementById('winner-cat-badge');
-  [nameEl, votesEl, badgeEl].forEach(el => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
-  nameEl.textContent = w.name; votesEl.textContent = w.votes + ' votes';
-  let pk = null;
-  if (isAsstBoy) pk = 'aboy'; else if (isAsstGirl) pk = 'agirl'; else if (isGirl) pk = 'girl'; else if (cat.includes('BOY')) pk = 'boy';
-  const photoEl = document.getElementById('winner-photo'), phEl = document.getElementById('winner-photo-placeholder');
-  if (pk && photoData[pk]) { photoEl.src = photoData[pk]; photoEl.style.animation = 'none'; void photoEl.offsetWidth; photoEl.style.animation = ''; photoEl.classList.add('visible'); phEl.style.display = 'none'; }
-  else { photoEl.classList.remove('visible'); phEl.style.display = 'flex'; }
+  document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + badgeClass;
+  document.getElementById('winner-name-text').textContent = w.name;
+  document.getElementById('winner-votes-text').textContent = w.votes + (w.votes === 1 ? ' vote' : ' votes');
+
+  // ── FIX: Photo animation replay ──
+  const photoEl = document.getElementById('winner-photo');
+  const phEl    = document.getElementById('winner-photo-placeholder');
+
+  if (role && photoData[role]) {
+    // Has photo — show it with fresh pop-in animation
+    phEl.style.display = 'none';
+    photoEl.src = photoData[role];
+    photoEl.style.display = 'block';
+    // Remove, force reflow, re-add the animate class so @keyframes restarts
+    photoEl.classList.remove('animate');
+    void photoEl.offsetWidth; // force reflow
+    photoEl.classList.add('animate');
+  } else {
+    // No photo — show placeholder
+    photoEl.style.display = 'none';
+    photoEl.classList.remove('animate');
+    phEl.style.display = 'flex';
+  }
+
+  // ── Replay animations on name/votes/badge ──
+  ['winner-name-text', 'winner-votes-text', 'winner-cat-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('animate');
+    void el.offsetWidth;
+    el.classList.add('animate');
+  });
+
+  // Prev / Next buttons
+  const prevBtn = document.getElementById('reveal-prev');
   const nextBtn = document.getElementById('reveal-next');
-  if (revealIndex < revealCategories.length - 1) { nextBtn.textContent = 'Reveal ' + revealCategories[revealIndex + 1] + ' →'; nextBtn.style.display = 'block'; } else nextBtn.style.display = 'none';
-  launchConfetti(isAsstGirl ? '#d8b4fe' : isAsstBoy ? '#67e8f9' : isGirl ? '#f9a8d4' : '#93c5fd');
-}
-function revealNext() {
-  revealIndex++;
-  if (revealIndex < revealCategories.length) { closeReveal(); setTimeout(() => startReveal(revealCategories[revealIndex]), 300); }
-}
-function closeReveal() { document.getElementById('reveal-overlay').classList.remove('active'); clearInterval(countdownTimer); stopConfetti(); }
-function runCountdown(secs, onDone) {
-  let n = secs;
-  const numEl = document.getElementById('countdown-number'), barEl = document.getElementById('countdown-bar');
-  numEl.textContent = n; barEl.style.transition = 'none'; barEl.style.width = '100%';
-  clearInterval(countdownTimer);
-  setTimeout(() => {
-    barEl.style.transition = 'width 1s linear'; barEl.style.width = ((n - 1) / secs * 100) + '%';
-    countdownTimer = setInterval(() => {
-      n--; numEl.textContent = n; barEl.style.width = (Math.max(0, (n - 1) / secs) * 100) + '%';
-      if (n <= 0) { clearInterval(countdownTimer); setTimeout(onDone, 400); }
-    }, 1000);
-  }, 50);
+  prevBtn.style.display = revealIndex > 0 ? 'block' : 'none';
+  if (revealIndex < revealCategories.length - 1) {
+    nextBtn.textContent = 'Reveal ' + revealCategories[revealIndex + 1] + ' →';
+    nextBtn.style.display = 'block';
+  } else {
+    nextBtn.style.display = 'none';
+  }
+
+  updateProgressDots();
+  launchConfetti(confettiColor);
 }
 
-/* ════ CONFETTI ════ */
+function revealNext() {
+  if (revealIndex >= revealCategories.length - 1) return;
+  stopConfetti();
+  revealIndex++;
+  startCountdownFor(revealIndex);
+}
+function revealPrev() {
+  if (revealIndex <= 0) return;
+  stopConfetti();
+  revealIndex--;
+  startCountdownFor(revealIndex);
+}
+function closeReveal() {
+  document.getElementById('reveal-overlay').classList.remove('active');
+  clearInterval(countdownTimer);
+  stopConfetti();
+}
+
+/* ─ Countdown timer
+   FIX: Set bar width without transition first (avoids race condition),
+        then in next frame enable transition and animate ─ */
+function runCountdown(secs, onDone) {
+  clearInterval(countdownTimer);
+  let n = secs;
+  const numEl  = document.getElementById('countdown-number');
+  const barEl  = document.getElementById('countdown-bar');
+
+  numEl.textContent = n;
+  numEl.classList.remove('counting'); void numEl.offsetWidth; numEl.classList.add('counting');
+
+  // Set bar to 100% instantly (no transition), then start animating
+  barEl.style.transition = 'none';
+  barEl.style.width = '100%';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      barEl.style.transition = 'width 1s linear';
+      barEl.style.width = ((n - 1) / secs * 100) + '%';
+      countdownTimer = setInterval(() => {
+        n--;
+        numEl.textContent = n;
+        barEl.style.width = (Math.max(0, (n - 1) / secs) * 100) + '%';
+        if (n <= 0) {
+          clearInterval(countdownTimer);
+          numEl.classList.remove('counting');
+          setTimeout(onDone, 400);
+        }
+      }, 1000);
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   CONFETTI
+════════════════════════════════════════════ */
 let confettiAnim = null, confettiParticles = [];
 function launchConfetti(accent) {
-  const canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth; canvas.height = window.innerHeight;
   const colors = [accent, '#fff', '#fbbf24', '#34d399'];
-  confettiParticles = Array.from({ length: 120 }, () => ({
-    x: Math.random() * canvas.width, y: -20, w: Math.random() * 10 + 4, h: Math.random() * 6 + 3,
-    color: colors[Math.floor(Math.random() * colors.length)], rot: Math.random() * 360,
-    rotV: (Math.random() - 0.5) * 8, vy: Math.random() * 3 + 2, vx: (Math.random() - 0.5) * 3, alpha: 1
+  confettiParticles = Array.from({ length: 140 }, () => ({
+    x: Math.random() * canvas.width, y: -20,
+    w: Math.random() * 10 + 4, h: Math.random() * 6 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 8,
+    vy: Math.random() * 3 + 2, vx: (Math.random() - 0.5) * 3, alpha: 1
   }));
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     confettiParticles.forEach(p => {
       p.y += p.vy; p.x += p.vx; p.rot += p.rotV;
-      if (p.y > canvas.height * 0.7) p.alpha = Math.max(0, p.alpha - 0.015);
-      ctx.save(); ctx.globalAlpha = p.alpha; ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      if (p.y > canvas.height * 0.65) p.alpha = Math.max(0, p.alpha - 0.018);
+      ctx.save(); ctx.globalAlpha = p.alpha; ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
     });
     confettiParticles = confettiParticles.filter(p => p.alpha > 0);
     if (confettiParticles.length) confettiAnim = requestAnimationFrame(draw);
@@ -968,7 +1325,12 @@ function launchConfetti(accent) {
   if (confettiAnim) cancelAnimationFrame(confettiAnim);
   confettiAnim = requestAnimationFrame(draw);
 }
-function stopConfetti() { if (confettiAnim) cancelAnimationFrame(confettiAnim); confettiParticles = []; }
+function stopConfetti() {
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiParticles = [];
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
 </script>
 </body>
 </html>
