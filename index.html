@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    #countdown-number.ready { font-size: min(20vw, 160px); opacity: 0.6; }
     :root {
       --blue-50:#eff6ff;--blue-100:#dbeafe;--blue-200:#bfdbfe;
       --blue-400:#60a5fa;--blue-500:#3b82f6;--blue-600:#2563eb;
@@ -486,10 +487,7 @@
       </div>
     </div>
     <!-- Category → Role mapping (populated after load) -->
-    <div id="cat-role-section">
-      <h4>Category → Role mapping <span style="font-weight:400;color:var(--muted);font-size:0.65rem;text-transform:none;letter-spacing:0">(used to pick the right photo on reveal)</span></h4>
-      <div class="cat-role-grid" id="cat-role-grid"></div>
-    </div>
+    
   </div>
 
   <div id="placeholder">
@@ -635,8 +633,9 @@ const BAR_COLORS = ['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626',
 let winnerData = {}, photoData = {};
 // catRoleMap: { 'HEAD BOY': 'boy', 'HEAD GIRL': 'girl', ... }
 // Populated by user via dropdowns; auto-guessed on load
+const ROLE_HIERARCHY = ['boy', 'girl', 'aboy', 'agirl'];
+const HARDCODED_ROLE_MAP = {}; // filled by buildCatRoleUI on load
 let catRoleMap = {};
-let revealCategories = [], revealIndex = 0, countdownTimer = null;
 let trendChartInstance = null, trendDataStore = {};
 
 /* ════════════════════════════════════════════
@@ -804,34 +803,11 @@ function guessRoleForCategory(cat) {
 function buildCatRoleUI(categories) {
   catRoleMap = {};
   categories.forEach(cat => {
-    const guessed = catRoleMap[cat] || guessRoleForCategory(cat);
-    catRoleMap[cat] = guessed || 'none';
+    catRoleMap[cat] = guessRoleForCategory(cat) || 'none';
   });
-
-  const section = document.getElementById('cat-role-section');
-  const grid = document.getElementById('cat-role-grid');
-  section.style.display = 'block';
-
-  const roleOptions = [
-    { val:'none',  label:'— none —' },
-    { val:'boy',   label:'Head Boy' },
-    { val:'girl',  label:'Head Girl' },
-    { val:'aboy',  label:'Asst. Head Boy' },
-    { val:'agirl', label:'Asst. Head Girl' },
-  ];
-
-  grid.innerHTML = categories.map(cat => {
-    const sel = catRoleMap[cat] || 'none';
-    const opts = roleOptions.map(o =>
-      `<option value="${o.val}"${sel === o.val ? ' selected' : ''}>${o.label}</option>`
-    ).join('');
-    return `<div class="cat-role-row">
-      <label title="${cat}">${cat}</label>
-      <select onchange="catRoleMap['${cat}']=this.value">${opts}</select>
-    </div>`;
-  }).join('');
+  // Hide the manual mapping section — order is hardcoded
+  document.getElementById('cat-role-section').style.display = 'none';
 }
-
 /* ════════════════════════════════════════════
    NODE HEALTH
 ════════════════════════════════════════════ */
@@ -1119,8 +1095,17 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
    6. Role detection uses catRoleMap (user-configurable) as primary source
 ════════════════════════════════════════════ */
 function startRevealAll() {
-  revealCategories = Object.keys(winnerData);
-  if (!revealCategories.length) { alert('Load votes first.'); return; }
+  if (!Object.keys(winnerData).length) { alert('Load votes first.'); return; }
+  // Sort categories by hardcoded hierarchy: boy → girl → aboy → agirl → rest
+  revealCategories = Object.keys(winnerData).sort((a, b) => {
+    const ra = catRoleMap[a] || 'zzz';
+    const rb = catRoleMap[b] || 'zzz';
+    const ia = ROLE_HIERARCHY.indexOf(ra);
+    const ib = ROLE_HIERARCHY.indexOf(rb);
+    const sa = ia === -1 ? 99 : ia;
+    const sb = ib === -1 ? 99 : ib;
+    return sa - sb;
+  });
   revealIndex = 0;
   openRevealOverlay();
   startCountdownFor(revealIndex);
@@ -1156,14 +1141,29 @@ function updateProgressDots() {
 
 function startCountdownFor(idx) {
   const cat = revealCategories[idx];
-  // Switch to countdown screen (in-place, no overlay close/open)
-  document.getElementById('screen-countdown').style.display = 'flex';
   document.getElementById('screen-winner').style.display = 'none';
   document.getElementById('reveal-next').style.display = 'none';
   document.getElementById('reveal-prev').style.display = 'none';
-  document.getElementById('countdown-label').textContent = 'Announcing ' + cat;
   updateProgressDots();
-  runCountdown(10, () => showWinner(cat));
+
+  // Show a "ready" gate — black screen with category name and a tap-to-start prompt
+  const cd = document.getElementById('screen-countdown');
+  cd.style.display = 'flex';
+  document.getElementById('countdown-label').textContent = cat;
+  document.getElementById('countdown-number').textContent = '▶';
+  document.getElementById('countdown-number').classList.remove('counting');
+  document.getElementById('countdown-number').classList.add('ready');
+  document.getElementById('countdown-bar').style.transition = 'none';
+  document.getElementById('countdown-bar').style.width = '0%';
+
+  // One-time click anywhere on overlay starts the real countdown
+  function onTap(e) {
+    if (e.target.id === 'reveal-close') return; // don't intercept close button
+    document.getElementById('reveal-overlay').removeEventListener('click', onTap);
+    document.getElementById('countdown-label').textContent = 'Announcing ' + cat;
+    runCountdown(10, () => showWinner(cat));
+  }
+  document.getElementById('reveal-overlay').addEventListener('click', onTap);
 }
 
 function showWinner(cat) {
@@ -1264,6 +1264,7 @@ function closeReveal() {
         then in next frame enable transition and animate ─ */
 function runCountdown(secs, onDone) {
   clearInterval(countdownTimer);
+  document.getElementById('countdown-number').classList.remove('ready');
   let n = secs;
   const numEl  = document.getElementById('countdown-number');
   const barEl  = document.getElementById('countdown-bar');
