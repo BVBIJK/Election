@@ -113,14 +113,6 @@
     .photo-label{font-size:0.75rem;color:var(--muted);}
     .photo-hint{font-size:0.68rem;color:var(--muted);margin-top:4px;}
 
-    /* ── Category → role mapping ── */
-    #cat-role-section { display:none; margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem; }
-    #cat-role-section h4 { font-size:0.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.6rem; }
-    .cat-role-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px; }
-    .cat-role-row { display:flex;align-items:center;gap:8px; }
-    .cat-role-row label { font-size:0.72rem;font-family:var(--mono);color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-    .cat-role-row select { font-family:var(--mono);font-size:0.7rem;border:1px solid var(--border);border-radius:5px;padding:2px 6px;background:var(--surface2);color:var(--text);cursor:pointer;outline:none; }
-
     /* ── Main ── */
     main{padding:1.75rem 2rem;max-width:1100px;margin:0 auto;}
 
@@ -252,7 +244,7 @@
     #placeholder p{font-size:0.875rem;color:var(--muted);line-height:1.7;}
 
     /* ══════════════════════════════════════════
-       REVEAL OVERLAY — fully rewritten
+       REVEAL OVERLAY
     ══════════════════════════════════════════ */
     #reveal-overlay {
       display:none;position:fixed;inset:0;z-index:9999;
@@ -261,7 +253,6 @@
     #reveal-overlay.active { display:flex; }
     #confetti-canvas { position:absolute;inset:0;pointer-events:none; }
 
-    /* Close / Next buttons */
     #reveal-close {
       position:absolute;top:1.5rem;right:1.5rem;
       background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
@@ -284,7 +275,6 @@
     }
     #reveal-prev:hover { background:rgba(255,255,255,0.15);color:#fff; }
 
-    /* Progress dots */
     #reveal-progress {
       position:absolute;top:1.5rem;left:50%;transform:translateX(-50%);
       display:flex;gap:8px;z-index:2;
@@ -296,22 +286,17 @@
     .rev-dot.done { background:rgba(255,255,255,0.5); }
     .rev-dot.current { background:#fff;transform:scale(1.3); }
 
-    /* Countdown screen */
     #screen-countdown { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem; }
     .reveal-eyebrow { font-family:var(--font);font-size:1rem;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.4); }
     #countdown-number { font-family:var(--display);font-size:min(40vw,320px);line-height:1;color:#fff; }
-    /* FIX: use CSS animation with key-based restart via custom property */
     #countdown-number.counting { animation:pulse-num 1s ease-in-out infinite; }
     @keyframes pulse-num { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(0.95);} }
     .countdown-bar-wrap { width:300px;height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:0.5rem; }
-    #countdown-bar { height:100%;background:#fff;border-radius:99px; /* no transition here, set via JS */ }
+    #countdown-bar { height:100%;background:#fff;border-radius:99px; }
 
-    /* Winner screen */
     #screen-winner { display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;text-align:center;padding:2rem; }
     .winner-title { font-family:var(--font);font-size:0.9rem;font-weight:700;letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,255,255,0.5); }
     .winner-photo-wrap { position:relative; }
-
-    /* FIX: photo animation resets by toggling a class each time */
     .winner-photo {
       width:180px;height:180px;border-radius:50%;object-fit:cover;
       border:4px solid #fff;display:block;
@@ -323,7 +308,6 @@
       display:flex;align-items:center;justify-content:center;font-size:4rem;
     }
     @keyframes pop-in { from{transform:scale(0.5);opacity:0;} to{transform:scale(1);opacity:1;} }
-
     .winner-name {
       font-family:var(--display);font-size:min(14vw,110px);line-height:1;color:#fff;letter-spacing:0.02em;
     }
@@ -409,7 +393,6 @@
   <div class="toolbar-sep"></div>
   <button class="tbtn tbtn-reveal" onclick="startRevealAll()">🎙 Reveal All Winners</button>
   <div class="toolbar-sep"></div>
-  <!-- Repo config -->
   <div id="repo-config-wrap">
     <label>Repo:</label>
     <input type="text" id="repo-input" placeholder="owner/repo-name" title="GitHub owner/repo (e.g. myschool/election-2025)" />
@@ -486,8 +469,6 @@
         </div>
       </div>
     </div>
-    <!-- Category → Role mapping (populated after load) -->
-    
   </div>
 
   <div id="placeholder">
@@ -603,7 +584,6 @@ function tickAutoRefresh() {
   updateARDisplay();
   clearInterval(autoRefreshCountdownTimer);
   autoRefreshCountdownTimer = setInterval(() => {
-    // Pause countdown while reveal is open
     if (document.getElementById('reveal-overlay').classList.contains('active')) return;
     autoRefreshSecsLeft--;
     updateARDisplay();
@@ -627,16 +607,24 @@ function updateARDisplay() {
 }
 
 /* ════════════════════════════════════════════
-   APP GLOBALS
+   APP GLOBALS — FIX #1: properly declared
 ════════════════════════════════════════════ */
 const BAR_COLORS = ['#2563eb','#7c3aed','#0891b2','#d97706','#059669','#dc2626','#db2777','#65a30d'];
-let winnerData = {}, photoData = {};
-// catRoleMap: { 'HEAD BOY': 'boy', 'HEAD GIRL': 'girl', ... }
-// Populated by user via dropdowns; auto-guessed on load
-const ROLE_HIERARCHY = ['boy', 'girl', 'aboy', 'agirl'];
-const HARDCODED_ROLE_MAP = {}; // filled by buildCatRoleUI on load
+let winnerData = {};
+let photoData = {};
 let catRoleMap = {};
-let trendChartInstance = null, trendDataStore = {};
+let trendChartInstance = null;
+let trendDataStore = {};
+
+// FIX #1: declare these at module scope so all functions share the same variables
+let revealCategories = [];
+let revealIndex = 0;
+let countdownTimer = null;
+
+// FIX #2: AbortController for tap listener — prevents stacking listeners
+let tapListenerAbort = null;
+
+const ROLE_HIERARCHY = ['boy', 'girl', 'aboy', 'agirl'];
 
 /* ════════════════════════════════════════════
    PHOTO HANDLER
@@ -669,21 +657,16 @@ async function fetchCsv(path) {
   return res.text();
 }
 
-/* ─ Robust GitHub repo detection ─
-   Priority: 1) manual input field  2) URL path  3) error */
 function detectRepo() {
   const manual = (document.getElementById('repo-input').value || '').trim();
   if (manual && manual.includes('/')) return manual;
-
-  // Try to detect from GitHub Pages URL: username.github.io/reponame/...
-  const hostname = location.hostname; // e.g. "myschool.github.io"
+  const hostname = location.hostname;
   const pathParts = location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
   if (hostname.endsWith('.github.io') && pathParts.length >= 1) {
     const owner = hostname.replace('.github.io', '');
     const repo = pathParts[0];
     return `${owner}/${repo}`;
   }
-  // Running locally / non-GitHub-Pages — require manual entry
   return null;
 }
 
@@ -708,25 +691,22 @@ async function discoverCsvPaths() {
   return files.filter(f => f.name.endsWith('.csv')).map(f => `votes/${f.name}`);
 }
 
-/* ─ RFC-4180 compliant CSV parser (handles quoted fields, \r\n, commas in values) ─ */
+/* RFC-4180 compliant CSV parser */
 function parseCsv(text) {
-  // Normalise line endings
   text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = text.trim().split('\n').filter(l => l.trim());
   if (lines.length < 2) return [];
-
   function parseRow(line) {
     const fields = [];
     let i = 0, cur = '';
     while (i < line.length) {
       if (line[i] === '"') {
-        i++; // skip opening quote
+        i++;
         while (i < line.length) {
           if (line[i] === '"' && line[i + 1] === '"') { cur += '"'; i += 2; }
           else if (line[i] === '"') { i++; break; }
           else { cur += line[i++]; }
         }
-        // skip comma or end
         if (line[i] === ',') i++;
       } else {
         const end = line.indexOf(',', i);
@@ -737,7 +717,6 @@ function parseCsv(text) {
     }
     return fields;
   }
-
   const headers = parseRow(lines[0]);
   return lines.slice(1).map(line => {
     const vals = parseRow(line);
@@ -785,8 +764,7 @@ function renderDuplicateWarning(dups) {
 }
 
 /* ════════════════════════════════════════════
-   ROLE DETECTION — robust pattern matching
-   Returns: 'boy' | 'girl' | 'aboy' | 'agirl' | null
+   ROLE DETECTION
 ════════════════════════════════════════════ */
 function guessRoleForCategory(cat) {
   const u = cat.toUpperCase();
@@ -797,17 +775,19 @@ function guessRoleForCategory(cat) {
   if (isAsst && hasBoy)  return 'aboy';
   if (hasGirl)           return 'girl';
   if (hasBoy)            return 'boy';
-  return null; // unknown — user must map manually
+  return null;
 }
 
+// FIX #5: buildCatRoleUI only sets catRoleMap — no DOM injection needed
+// (the cat-role-section HTML has been removed entirely from the markup,
+//  since reveal order is hardcoded and manual mapping is not exposed)
 function buildCatRoleUI(categories) {
   catRoleMap = {};
   categories.forEach(cat => {
     catRoleMap[cat] = guessRoleForCategory(cat) || 'none';
   });
-  // Hide the manual mapping section — order is hardcoded
-  document.getElementById('cat-role-section').style.display = 'none';
 }
+
 /* ════════════════════════════════════════════
    NODE HEALTH
 ════════════════════════════════════════════ */
@@ -816,7 +796,6 @@ function renderNodeHealth(nodeLog) {
   document.getElementById('node-health-grid').innerHTML = nodeLog.map(n => {
     const active = n.status === 'ok' && n.count > 0;
     const empty  = n.status === 'ok' && n.count === 0;
-    const fail   = n.status === 'fail';
     const sc = active ? 'status-active' : empty ? 'status-empty' : 'status-fail';
     const bc = active ? 'ok' : empty ? 'warn' : 'err';
     const bt = active ? '✓ Active' : empty ? '⚠ Empty file' : '✗ Failed to load';
@@ -1084,19 +1063,25 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
 }
 
 /* ════════════════════════════════════════════
-   REVEAL — fully rewritten
+   REVEAL
 
-   KEY FIXES:
-   1. Photo animation: remove .animate, force reflow, re-add — guarantees replay every time
-   2. Winner screen: hide/show photo correctly without leftover state
-   3. Countdown bar: set width without transition first, then animate
-   4. No more closeReveal+reopen flicker between categories
-   5. Progress dots track position
-   6. Role detection uses catRoleMap (user-configurable) as primary source
+   FIX #1: revealCategories, revealIndex, countdownTimer declared at top scope
+   FIX #2: tapListenerAbort prevents stacking click listeners across Prev/Next/re-opens
+   FIX #3: closeReveal aborts any pending tap listener
+   FIX #5: buildCatRoleUI no longer touches missing #cat-role-section DOM node
 ════════════════════════════════════════════ */
+
+// FIX #8: resize handler keeps confetti canvas full-screen
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('confetti-canvas');
+  if (canvas && document.getElementById('reveal-overlay').classList.contains('active')) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+});
+
 function startRevealAll() {
   if (!Object.keys(winnerData).length) { alert('Load votes first.'); return; }
-  // Sort categories by hardcoded hierarchy: boy → girl → aboy → agirl → rest
   revealCategories = Object.keys(winnerData).sort((a, b) => {
     const ra = catRoleMap[a] || 'zzz';
     const rb = catRoleMap[b] || 'zzz';
@@ -1140,16 +1125,25 @@ function updateProgressDots() {
 }
 
 function startCountdownFor(idx) {
+  // FIX #2 + #3: abort any previous tap listener before adding a new one
+  if (tapListenerAbort) {
+    tapListenerAbort.abort();
+    tapListenerAbort = null;
+  }
+
+  // Also stop any running countdown timer
+  clearInterval(countdownTimer);
+  countdownTimer = null;
+
   const cat = revealCategories[idx];
   const sw   = document.getElementById('screen-winner');
   const next = document.getElementById('reveal-next');
   const prev = document.getElementById('reveal-prev');
-  if (sw)   sw.style.display   = 'none';
-  if (next) next.style.display = 'none';
-  if (prev) prev.style.display = 'none';
+  sw.style.display   = 'none';
+  next.style.display = 'none';
+  prev.style.display = 'none';
   updateProgressDots();
 
-  // Show a "ready" gate — black screen with category name and a tap-to-start prompt
   const cd = document.getElementById('screen-countdown');
   cd.style.display = 'flex';
   document.getElementById('countdown-label').textContent = cat;
@@ -1159,69 +1153,65 @@ function startCountdownFor(idx) {
   document.getElementById('countdown-bar').style.transition = 'none';
   document.getElementById('countdown-bar').style.width = '0%';
 
-  // One-time click anywhere on overlay starts the real countdown
+  // FIX #2: use AbortController so old listener is cleaned up before adding new one
+  tapListenerAbort = new AbortController();
   function onTap(e) {
-    if (e.target.id === 'reveal-close') return; // don't intercept close button
-    document.getElementById('reveal-overlay').removeEventListener('click', onTap);
+    // Don't intercept the close button
+    if (e.target.closest('#reveal-close')) return;
+    tapListenerAbort.abort();
+    tapListenerAbort = null;
     document.getElementById('countdown-label').textContent = 'Announcing ' + cat;
     runCountdown(10, () => showWinner(cat));
   }
-  document.getElementById('reveal-overlay').addEventListener('click', onTap);
+  document.getElementById('reveal-overlay').addEventListener('click', onTap, {
+    signal: tapListenerAbort.signal
+  });
 }
 
 function showWinner(cat) {
   const w = winnerData[cat];
   if (!w) return;
 
-  // Determine role from catRoleMap first, then fall back to auto-detect
   const role = (catRoleMap[cat] && catRoleMap[cat] !== 'none')
     ? catRoleMap[cat]
     : guessRoleForCategory(cat);
 
-  // Badge class
   const badgeClass = {
     boy: 'badge-boy', girl: 'badge-girl',
     aboy: 'badge-aboy', agirl: 'badge-agirl'
   }[role] || 'badge-other';
 
-  // Confetti colour
   const confettiColor = {
     girl: '#f9a8d4', agirl: '#d8b4fe', aboy: '#67e8f9', boy: '#93c5fd'
   }[role] || '#fff';
 
-  // Switch screens
   document.getElementById('screen-countdown').style.display = 'none';
   const ws = document.getElementById('screen-winner');
   ws.style.display = 'flex';
 
-  // Set text
   document.getElementById('winner-title-label').textContent = cat;
   document.getElementById('winner-cat-badge').textContent = cat;
   document.getElementById('winner-cat-badge').className = 'winner-category-badge ' + badgeClass;
   document.getElementById('winner-name-text').textContent = w.name;
   document.getElementById('winner-votes-text').textContent = w.votes + (w.votes === 1 ? ' vote' : ' votes');
 
-  // ── FIX: Photo animation replay ──
+  // FIX: photo animation replay via remove → reflow → re-add
   const photoEl = document.getElementById('winner-photo');
   const phEl    = document.getElementById('winner-photo-placeholder');
 
   if (role && photoData[role]) {
-    // Has photo — show it with fresh pop-in animation
     phEl.style.display = 'none';
     photoEl.src = photoData[role];
     photoEl.style.display = 'block';
-    // Remove, force reflow, re-add the animate class so @keyframes restarts
     photoEl.classList.remove('animate');
-    void photoEl.offsetWidth; // force reflow
+    void photoEl.offsetWidth;
     photoEl.classList.add('animate');
   } else {
-    // No photo — show placeholder
     photoEl.style.display = 'none';
     photoEl.classList.remove('animate');
     phEl.style.display = 'flex';
   }
 
-  // ── Replay animations on name/votes/badge ──
   ['winner-name-text', 'winner-votes-text', 'winner-cat-badge'].forEach(id => {
     const el = document.getElementById(id);
     el.classList.remove('animate');
@@ -1229,7 +1219,6 @@ function showWinner(cat) {
     el.classList.add('animate');
   });
 
-  // Prev / Next buttons
   const prevBtn = document.getElementById('reveal-prev');
   const nextBtn = document.getElementById('reveal-next');
   prevBtn.style.display = revealIndex > 0 ? 'block' : 'none';
@@ -1256,26 +1245,36 @@ function revealPrev() {
   revealIndex--;
   startCountdownFor(revealIndex);
 }
+
+// FIX #3: closeReveal now also aborts the tap listener
 function closeReveal() {
-  document.getElementById('reveal-overlay').classList.remove('active');
+  if (tapListenerAbort) {
+    tapListenerAbort.abort();
+    tapListenerAbort = null;
+  }
   clearInterval(countdownTimer);
+  countdownTimer = null;
+  document.getElementById('reveal-overlay').classList.remove('active');
   stopConfetti();
 }
 
-/* ─ Countdown timer
-   FIX: Set bar width without transition first (avoids race condition),
-        then in next frame enable transition and animate ─ */
+/* FIX: Countdown timer
+   Set bar to 100% without transition, then in next two frames enable transition
+   to avoid a race condition where the transition fires before width is painted. */
 function runCountdown(secs, onDone) {
   clearInterval(countdownTimer);
+  countdownTimer = null;
+
   document.getElementById('countdown-number').classList.remove('ready');
   let n = secs;
-  const numEl  = document.getElementById('countdown-number');
-  const barEl  = document.getElementById('countdown-bar');
+  const numEl = document.getElementById('countdown-number');
+  const barEl = document.getElementById('countdown-bar');
 
   numEl.textContent = n;
-  numEl.classList.remove('counting'); void numEl.offsetWidth; numEl.classList.add('counting');
+  numEl.classList.remove('counting');
+  void numEl.offsetWidth;
+  numEl.classList.add('counting');
 
-  // Set bar to 100% instantly (no transition), then start animating
   barEl.style.transition = 'none';
   barEl.style.width = '100%';
 
@@ -1289,6 +1288,7 @@ function runCountdown(secs, onDone) {
         barEl.style.width = (Math.max(0, (n - 1) / secs) * 100) + '%';
         if (n <= 0) {
           clearInterval(countdownTimer);
+          countdownTimer = null;
           numEl.classList.remove('counting');
           setTimeout(onDone, 400);
         }
@@ -1299,12 +1299,17 @@ function runCountdown(secs, onDone) {
 
 /* ════════════════════════════════════════════
    CONFETTI
+   FIX #8: canvas sized on launch from current window dimensions
 ════════════════════════════════════════════ */
-let confettiAnim = null, confettiParticles = [];
+let confettiAnim = null;
+let confettiParticles = [];
+
 function launchConfetti(accent) {
   const canvas = document.getElementById('confetti-canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  // FIX #8: always sync to current window size
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   const colors = [accent, '#fff', '#fbbf24', '#34d399'];
   confettiParticles = Array.from({ length: 140 }, () => ({
     x: Math.random() * canvas.width, y: -20,
@@ -1329,8 +1334,10 @@ function launchConfetti(accent) {
   if (confettiAnim) cancelAnimationFrame(confettiAnim);
   confettiAnim = requestAnimationFrame(draw);
 }
+
 function stopConfetti() {
   if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiAnim = null;
   confettiParticles = [];
   const canvas = document.getElementById('confetti-canvas');
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
