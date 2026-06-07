@@ -1141,9 +1141,12 @@ function updateProgressDots() {
 
 function startCountdownFor(idx) {
   const cat = revealCategories[idx];
-  document.getElementById('screen-winner').style.display = 'none';
-  document.getElementById('reveal-next').style.display = 'none';
-  document.getElementById('reveal-prev').style.display = 'none';
+  const sw   = document.getElementById('screen-winner');
+  const next = document.getElementById('reveal-next');
+  const prev = document.getElementById('reveal-prev');
+  if (sw)   sw.style.display   = 'none';
+  if (next) next.style.display = 'none';
+  if (prev) prev.style.display = 'none';
   updateProgressDots();
 
   // Show a "ready" gate — black screen with category name and a tap-to-start prompt
