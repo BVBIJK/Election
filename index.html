@@ -90,7 +90,7 @@
     #auto-refresh-countdown{font-family:var(--mono);font-size:0.7rem;color:var(--muted);min-width:60px;}
 
     /* ══════════════════════════════════════
-       REMOTE CONTROL PANEL  (new)
+       REMOTE CONTROL PANEL
     ══════════════════════════════════════ */
     #remote-control {
       background:var(--surface);border-bottom:2px solid var(--blue-100);
@@ -1041,6 +1041,19 @@ function nodeNameFromPath(path) {
 }
 
 /* ════════════════════════════════════════════
+   NAME NORMALIZATION
+════════════════════════════════════════════ */
+function normalizeName(name) {
+  return (name || '')
+    .trim()
+    .replace(/\s+/g, ' ')          // collapse multiple spaces into one
+    .replace(/[.\-_]+$/, '')       // strip trailing dots, dashes, underscores
+    .replace(/^[.\-_]+/, '')       // strip leading dots, dashes, underscores
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase()); // convert to Title Case
+}
+
+/* ════════════════════════════════════════════
    DUPLICATE DETECTION
 ════════════════════════════════════════════ */
 function detectDuplicates(catNodeData) {
@@ -1119,7 +1132,8 @@ function buildTrendData(snapshots) {
   const catData = {};
   [...snapshots].sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp)).forEach(snap => {
     snap.records.forEach(r => {
-      const cat = (r['Category']||'Unknown').toUpperCase(), name = r['Name']||'Unknown';
+      const cat = (r['Category']||'Unknown').toUpperCase();
+      const name = normalizeName(r['Name']||'Unknown'); // ← normalized
       const votes = parseInt(r['Votes'])||0;
       if (!catData[cat]) catData[cat] = {};
       if (!catData[cat][name]) catData[cat][name] = [];
@@ -1214,7 +1228,8 @@ async function loadAll() {
         allRecords.push(...records);
         if (records.length > 0) snapshots.push({ node, timestamp:exp, records });
         records.forEach(r => {
-          const cat = (r['Category']||'Unknown').toUpperCase(), name = r['Name']||'Unknown';
+          const cat = (r['Category']||'Unknown').toUpperCase();
+          const name = normalizeName(r['Name']||'Unknown'); // ← normalized
           const votes = parseInt(r['Votes'])||0;
           if (!catNodeData[cat]) catNodeData[cat] = {};
           if (!catNodeData[cat][node]) catNodeData[cat][node] = {};
@@ -1243,7 +1258,8 @@ async function loadAll() {
 function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, allNodes) {
   const catMap = {};
   records.forEach(r => {
-    const cat = (r['Category']||'Unknown').toUpperCase(), name = r['Name']||'Unknown';
+    const cat = (r['Category']||'Unknown').toUpperCase();
+    const name = normalizeName(r['Name']||'Unknown'); // ← normalized
     const v = parseInt(r['Votes'])||0;
     if (!catMap[cat]) catMap[cat] = {};
     catMap[cat][name] = (catMap[cat][name]||0) + v;
@@ -1262,7 +1278,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
     <div class="stat-card c1"><div class="s-label">Total votes cast</div><div class="s-val">${totalVotes}</div></div>
     <div class="stat-card c2"><div class="s-label">Nodes loaded</div><div class="s-val">${totalFiles}</div></div>
     <div class="stat-card c3"><div class="s-label">Categories</div><div class="s-val">${categories.length}</div></div>
-    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => r['Name'])).size}</div></div>`;
+    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => normalizeName(r['Name']))).size}</div></div>`;
   const trendCatData = buildTrendData(snapshots);
   if (snapshots.length >= 2) renderTrendSection(trendCatData, categories);
   const catWrap = document.getElementById('cat-blocks');
@@ -1313,7 +1329,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
 }
 
 /* ════════════════════════════════════════════
-   REVEAL (unchanged from original)
+   REVEAL
 ════════════════════════════════════════════ */
 window.addEventListener('resize', () => {
   const canvas = document.getElementById('confetti-canvas');
