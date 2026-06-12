@@ -1046,14 +1046,16 @@ function nodeNameFromPath(path) {
 function normalizeName(name) {
   return (name || '')
     .trim()
-    // Remove stray dots followed by a space: "John. Doe" → "John Doe"
+    // "K.Anirudh" → "K Anirudh"  (initial-dot joining letter to word)
+    .replace(/\b([A-Za-z])\.([A-Za-z])/g, '$1 $2')
+    // "John. Doe" → "John Doe"  (dot + space)
     .replace(/\.\s+/g, ' ')
-    // Remove space-then-dot: "John .Doe" → "John Doe"
+    // "John .Doe" → "John Doe"  (space + dot)
     .replace(/\s+\./g, ' ')
     // Strip leading/trailing dots, dashes, underscores
     .replace(/^[.\-_]+/, '')
     .replace(/[.\-_]+$/, '')
-    // Collapse any leftover multiple spaces
+    // Collapse multiple spaces
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
