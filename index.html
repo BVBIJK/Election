@@ -244,6 +244,24 @@
     .alias-group .ag-label{font-size:0.72rem;color:#92400e;}
     #alias-status{font-size:0.72rem;font-family:var(--mono);color:var(--muted);margin-top:6px;min-height:1rem;}
 
+    /* ── Manual Name Mapping Section ── */
+    #manual-merge-section{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;}
+    .mm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;}
+    #manual-merge-section h3{font-size:0.78rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.09em;display:flex;align-items:center;gap:6px;}
+    #manual-merge-section .alias-sub{font-size:0.72rem;color:var(--text2);margin-bottom:0.85rem;line-height:1.5;}
+    .mm-cat-block{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.75rem 0.9rem;margin-bottom:8px;}
+    .mm-cat-block .mm-cat-title{font-weight:700;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;color:var(--text2);margin-bottom:6px;}
+    .mm-name-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+    .mm-name-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:0.75rem;cursor:pointer;}
+    .mm-name-chip input{cursor:pointer;}
+    .mm-name-chip.selected{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-700);}
+    .mm-merge-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .mm-merge-row select{font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:#fff;color:var(--text);outline:none;}
+    .mm-active-wrap{margin-top:10px;}
+    .mm-active-wrap h4{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px;}
+    .mm-active-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.75rem;margin-bottom:4px;font-family:var(--mono);}
+    .mm-active-item button{background:none;border:none;color:var(--err);cursor:pointer;font-size:0.85rem;}
+
     /* ── Node Health ── */
     #node-health-wrap{margin-bottom:1.75rem;display:none;}
     .node-health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
@@ -476,6 +494,7 @@
   <div class="toolbar-sep"></div>
   <button class="tbtn tbtn-reveal" onclick="startRevealAll()">🎙 Reveal All Winners</button>
   <button class="tbtn" style="background:#7c3aed;color:#fff;" onclick="toggleRemoteControl()">⚡ Remote Control</button>
+  <button class="tbtn" style="background:#0891b2;color:#fff;" onclick="toggleManualMerge()">🔗 Name Mapping</button>
   <div class="toolbar-sep"></div>
   <div id="repo-config-wrap">
     <label>Repo:</label>
@@ -575,6 +594,24 @@
     <button class="rc-btn primary" style="margin-top:8px;width:200px;" onclick="applyAliases()">Apply &amp; Recalculate</button>
     <button class="rc-btn neutral" style="margin-top:8px;width:160px;margin-left:8px;" onclick="resetAliases()">Reset all merges</button>
     <div id="alias-status"></div>
+  </div>
+
+  <!-- ══ MANUAL NAME MAPPING SECTION ══ -->
+  <div id="manual-merge-section">
+    <div class="mm-header">
+      <h3>🔗 Manual Name Mapping</h3>
+      <button class="rc-btn neutral" style="width:auto;padding:4px 12px;" onclick="toggleManualMerge()">Close</button>
+    </div>
+    <div class="alias-sub">
+      Use this if a name has a typo on one or more nodes that wasn't auto-detected (e.g. "Jonh Doe" vs "John Doe").
+      Tick the names below that refer to the same person, pick the correct spelling to merge into, then click
+      "Merge selected". Mappings are saved in this browser and apply on top of automatic duplicate detection.
+    </div>
+    <div id="manual-merge-list"></div>
+    <div class="mm-active-wrap">
+      <h4>Active manual mappings</h4>
+      <div id="manual-merge-active"></div>
+    </div>
   </div>
 
   <div id="reveal-setup">
@@ -1192,6 +1229,93 @@ function resetAliases() {
 }
 
 /* ════════════════════════════════════════════
+   MANUAL NAME MAPPING (typo fixer)
+════════════════════════════════════════════ */
+function toggleManualMerge() {
+  const sec = document.getElementById('manual-merge-section');
+  if (sec.style.display === 'block') { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  renderManualMergeUI();
+}
+
+function getAllNamesByCategory() {
+  const result = {};
+  lastRecords.forEach(r => {
+    const cat = (r['Category']||'Unknown').toUpperCase();
+    const name = normalizeName(r['Name']||'Unknown');
+    if (!result[cat]) result[cat] = new Set();
+    result[cat].add(name);
+  });
+  return result;
+}
+
+function renderManualMergeUI() {
+  if (!lastRecords.length) {
+    document.getElementById('manual-merge-list').innerHTML = '<div style="font-size:0.78rem;color:var(--muted)">Load votes first.</div>';
+    document.getElementById('manual-merge-active').innerHTML = '';
+    return;
+  }
+  const byCat = getAllNamesByCategory();
+  const cats = Object.keys(byCat);
+  document.getElementById('manual-merge-list').innerHTML = cats.map((cat, ci) => {
+    const names = [...byCat[cat]].sort();
+    const chips = names.map((n, ni) =>
+      `<label class="mm-name-chip" id="mm-chip-${ci}-${ni}">
+        <input type="checkbox" value="${n}" onchange="updateMmChip(${ci},${ni})" />
+        ${n}
+      </label>`).join('');
+    return `<div class="mm-cat-block">
+      <div class="mm-cat-title">${cat}</div>
+      <div class="mm-name-list" id="mm-list-${ci}">${chips}</div>
+      <div class="mm-merge-row">
+        <span style="font-size:0.75rem;color:var(--text2);">Merge selected into:</span>
+        <select id="mm-target-${ci}"><option value="">— select —</option>${names.map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+        <button class="rc-btn primary" style="width:auto;padding:0 14px;" onclick="addManualMapping('${cat}',${ci})">Merge selected</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderActiveMappings();
+}
+
+function updateMmChip(ci, ni) {
+  const chip = document.getElementById(`mm-chip-${ci}-${ni}`);
+  const cb = chip.querySelector('input');
+  chip.classList.toggle('selected', cb.checked);
+}
+
+function addManualMapping(cat, ci) {
+  const target = document.getElementById(`mm-target-${ci}`).value;
+  if (!target) { showToast('Pick a target name first', '#d97706'); return; }
+  const checked = [...document.querySelectorAll(`#mm-list-${ci} input:checked`)].map(c => c.value);
+  if (!checked.length) { showToast('Select at least one name', '#d97706'); return; }
+  checked.forEach(n => { nameAliases[aliasKey(cat, n)] = target; });
+  try { localStorage.setItem('voteNameAliases', JSON.stringify(nameAliases)); } catch(e) {}
+  showToast('✓ Mapping saved', '#15803d');
+  renderManualMergeUI();
+  if (lastRecords.length) renderDashboard(lastRecords, lastNodeLog, lastTotalFiles, lastCatNodeData, lastSnapshots, lastAllNodes);
+}
+
+function renderActiveMappings() {
+  const entries = Object.entries(nameAliases);
+  const wrap = document.getElementById('manual-merge-active');
+  if (!entries.length) { wrap.innerHTML = '<div style="font-size:0.72rem;color:var(--muted)">No mappings yet.</div>'; return; }
+  wrap.innerHTML = entries.map(([key, target]) => {
+    const [cat, rawName] = key.split('||');
+    return `<div class="mm-active-item">
+      <span>${cat}: "${rawName}" → "${target}"</span>
+      <button onclick="removeMapping('${key.replace(/'/g,"\\'")}')" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeMapping(key) {
+  delete nameAliases[key];
+  try { localStorage.setItem('voteNameAliases', JSON.stringify(nameAliases)); } catch(e) {}
+  renderManualMergeUI();
+  if (lastRecords.length) renderDashboard(lastRecords, lastNodeLog, lastTotalFiles, lastCatNodeData, lastSnapshots, lastAllNodes);
+}
+
+/* ════════════════════════════════════════════
    ROLE DETECTION
 ════════════════════════════════════════════ */
 function guessRoleForCategory(cat) {
@@ -1364,6 +1488,8 @@ async function loadAll() {
     // Update remote control node list
     buildNodeCheckList(allNodes, heartbeatCache);
     renderNodeStatus();
+    // Refresh the manual-mapping UI if it's open
+    if (document.getElementById('manual-merge-section').style.display === 'block') renderManualMergeUI();
     hideStatus();
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('reveal-setup').style.display = 'block';
