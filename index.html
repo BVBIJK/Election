@@ -232,6 +232,18 @@
     .dup-variant{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:4px;padding:1px 7px;font-family:var(--mono);font-size:0.7rem;color:#92400e;}
     .dup-merge-note{font-size:0.68rem;color:var(--muted);margin-top:4px;}
 
+    /* ── Alias Merge Section ── */
+    #alias-section{display:none;background:var(--surface);border:1px solid var(--warn-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;}
+    #alias-section h3{font-size:0.78rem;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:0.4rem;display:flex;align-items:center;gap:6px;}
+    #alias-section .alias-sub{font-size:0.72rem;color:var(--text2);margin-bottom:0.85rem;line-height:1.5;}
+    .alias-group{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:8px;font-size:0.78rem;}
+    .alias-group .ag-cat{font-weight:700;color:var(--text);margin-bottom:4px;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;}
+    .alias-group .ag-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .alias-group select{font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:#fff;color:var(--text);outline:none;}
+    .alias-group select:focus{border-color:var(--accent);}
+    .alias-group .ag-label{font-size:0.72rem;color:#92400e;}
+    #alias-status{font-size:0.72rem;font-family:var(--mono);color:var(--muted);margin-top:6px;min-height:1rem;}
+
     /* ── Node Health ── */
     #node-health-wrap{margin-bottom:1.75rem;display:none;}
     .node-health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
@@ -550,6 +562,21 @@
     <div class="dup-list" id="dup-list"></div>
   </div>
 
+  <!-- ══ ALIAS / MERGE SECTION ══ -->
+  <div id="alias-section">
+    <h3>🔗 Merge Duplicate Spellings</h3>
+    <div class="alias-sub">
+      Pick which spelling is correct for each group below, then click "Apply &amp; Recalculate".
+      Votes for the other spellings will be added to the chosen name in all totals, breakdowns,
+      and the trend chart — without changing the original CSV files.
+      Your choices are remembered in this browser for future refreshes.
+    </div>
+    <div id="alias-list"></div>
+    <button class="rc-btn primary" style="margin-top:8px;width:200px;" onclick="applyAliases()">Apply &amp; Recalculate</button>
+    <button class="rc-btn neutral" style="margin-top:8px;width:160px;margin-left:8px;" onclick="resetAliases()">Reset all merges</button>
+    <div id="alias-status"></div>
+  </div>
+
   <div id="reveal-setup">
     <h3>🎭 Reveal Setup — Candidate Photos &amp; Role Mapping</h3>
     <div class="reveal-grid">
@@ -729,6 +756,31 @@ const ROLE_HIERARCHY = ['boy','girl','aboy','agirl'];
 /* Discovered nodes (from CSV filenames) */
 let knownNodes = [];
 
+/* Cache of last-loaded raw data so we can recompute after alias changes
+   without re-fetching from GitHub */
+let lastRecords = [], lastNodeLog = [], lastTotalFiles = 0,
+    lastCatNodeData = {}, lastSnapshots = [], lastAllNodes = [];
+
+/* ════════════════════════════════════════════
+   NAME ALIASES (duplicate-spelling merge)
+════════════════════════════════════════════ */
+let nameAliases = {};
+try { nameAliases = JSON.parse(localStorage.getItem('voteNameAliases') || '{}'); } catch(e) { nameAliases = {}; }
+let lastDupGroups = [];
+
+/* Build a stable key for a (category, raw-normalized-name) pair */
+function aliasKey(cat, name) {
+  return cat + '||' + name.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/* Resolve a candidate's display name through the alias map.
+   `cat` should already be uppercased category, `name` should already be
+   passed through normalizeName(). */
+function resolveAlias(cat, name) {
+  const k = aliasKey(cat, name);
+  return nameAliases[k] || name;
+}
+
 /* ════════════════════════════════════════════
    REMOTE CONTROL — toggle panel
 ════════════════════════════════════════════ */
@@ -750,25 +802,6 @@ function showToast(msg, color) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 350); }, 3000);
-}
-
-async function githubWriteJSON(path, payload) {
-  const repo = getRepo();
-  if (!repo) { showToast('Set the repo in the toolbar first', '#b91c1c'); return false; }
-  const pat = prompt('GitHub PAT (with repo write access):');
-  if (!pat) return false;
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
-  const headers = { 'Authorization': `token ${pat}`, 'Content-Type': 'application/json' };
-  let sha;
-  try {
-    const existing = await fetch(apiUrl, { headers });
-    if (existing.ok) { const d = await existing.json(); sha = d.sha; }
-  } catch(e) {}
-  const body = { message: `panel: update ${path}`, content: encoded };
-  if (sha) body.sha = sha;
-  const res = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
-  return res.ok;
 }
 
 /* ────────────────────────────────
@@ -1046,16 +1079,14 @@ function nodeNameFromPath(path) {
 function normalizeName(name) {
   return (name || '')
     .trim()
-    // "K.Anirudh" → "K Anirudh"  (initial-dot joining letter to word)
-    .replace(/\b([A-Za-z])\.([A-Za-z])/g, '$1 $2')
-    // "John. Doe" → "John Doe"  (dot + space)
+    // Remove stray dots followed by a space: "John. Doe" → "John Doe"
     .replace(/\.\s+/g, ' ')
-    // "John .Doe" → "John Doe"  (space + dot)
+    // Remove space-then-dot: "John .Doe" → "John Doe"
     .replace(/\s+\./g, ' ')
     // Strip leading/trailing dots, dashes, underscores
     .replace(/^[.\-_]+/, '')
     .replace(/[.\-_]+$/, '')
-    // Collapse multiple spaces
+    // Collapse any leftover multiple spaces
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
@@ -1083,16 +1114,81 @@ function detectDuplicates(catNodeData) {
   });
   return dups;
 }
+
+/* ════════════════════════════════════════════
+   ALIAS MERGE UI
+════════════════════════════════════════════ */
 function renderDuplicateWarning(dups) {
+  lastDupGroups = dups;
   const wrap = document.getElementById('dup-warning');
-  if (!dups.length) { wrap.style.display = 'none'; return; }
+  const aliasWrap = document.getElementById('alias-section');
+
+  if (!dups.length) {
+    wrap.style.display = 'none';
+    aliasWrap.style.display = 'none';
+    document.getElementById('alias-status').textContent = '';
+    return;
+  }
+
   wrap.style.display = 'block';
   document.getElementById('dup-list').innerHTML = dups.map(d => `
     <div class="dup-item">
       <strong>${d.category}</strong> — variants:
       <div class="dup-variants">${d.variants.map(v => `<span class="dup-variant">"${v}"</span>`).join('')}</div>
-      <div class="dup-merge-note">Fix spellings on voting nodes and re-export.</div>
+      <div class="dup-merge-note">Choose the correct spelling in "Merge Duplicate Spellings" below, then Apply &amp; Recalculate.</div>
     </div>`).join('');
+
+  aliasWrap.style.display = 'block';
+  document.getElementById('alias-list').innerHTML = dups.map((d, i) => {
+    // Figure out which variant is currently chosen as the canonical name
+    // (if any alias already exists for this group)
+    let chosen = d.variants[0];
+    for (const v of d.variants) {
+      const k = aliasKey(d.category, v);
+      if (nameAliases[k]) { chosen = nameAliases[k]; break; }
+    }
+    const options = d.variants.map(v =>
+      `<option value="${v}" ${v === chosen ? 'selected' : ''}>${v}</option>`
+    ).join('');
+    return `<div class="alias-group" data-idx="${i}">
+      <div class="ag-cat">${d.category}</div>
+      <div class="ag-row">
+        <span class="ag-label">Merge into:</span>
+        <select id="alias-sel-${i}">${options}</select>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function applyAliases() {
+  lastDupGroups.forEach((d, i) => {
+    const sel = document.getElementById(`alias-sel-${i}`);
+    if (!sel) return;
+    const chosen = sel.value;
+    d.variants.forEach(v => {
+      nameAliases[aliasKey(d.category, v)] = chosen;
+    });
+  });
+  try { localStorage.setItem('voteNameAliases', JSON.stringify(nameAliases)); } catch(e) {}
+  document.getElementById('alias-status').textContent =
+    `✓ Merges applied at ${new Date().toLocaleTimeString()} — recalculating…`;
+  // Recompute everything from the cached raw records, no need to re-fetch
+  if (lastRecords.length) {
+    renderDashboard(lastRecords, lastNodeLog, lastTotalFiles, lastCatNodeData, lastSnapshots, lastAllNodes);
+    document.getElementById('alias-status').textContent =
+      `✓ Merges applied at ${new Date().toLocaleTimeString()} — totals updated`;
+  }
+}
+
+function resetAliases() {
+  if (!confirm('Remove all spelling merges? This cannot be undone (but you can re-create them).')) return;
+  nameAliases = {};
+  try { localStorage.removeItem('voteNameAliases'); } catch(e) {}
+  document.getElementById('alias-status').textContent = '✓ All merges removed — recalculating…';
+  if (lastRecords.length) {
+    renderDashboard(lastRecords, lastNodeLog, lastTotalFiles, lastCatNodeData, lastSnapshots, lastAllNodes);
+    document.getElementById('alias-status').textContent = '✓ All merges removed — totals updated';
+  }
 }
 
 /* ════════════════════════════════════════════
@@ -1143,7 +1239,7 @@ function buildTrendData(snapshots) {
   [...snapshots].sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp)).forEach(snap => {
     snap.records.forEach(r => {
       const cat = (r['Category']||'Unknown').toUpperCase();
-      const name = normalizeName(r['Name']||'Unknown');
+      const name = resolveAlias(cat, normalizeName(r['Name']||'Unknown'));
       const votes = parseInt(r['Votes'])||0;
       if (!catData[cat]) catData[cat] = {};
       if (!catData[cat][name]) catData[cat][name] = [];
@@ -1191,16 +1287,25 @@ function renderTrendChart(cat) {
 /* ════════════════════════════════════════════
    NODE BREAKDOWN
 ════════════════════════════════════════════ */
-function buildNodeBreakdownHTML(catNodeData, allNodes) {
+function buildNodeBreakdownHTML(catNodeData, allNodes, cat) {
+  // catNodeData[node][rawName] = votes  -- apply alias resolution per-name
+  const merged = {}; // node -> resolvedName -> votes
+  Object.entries(catNodeData).forEach(([node, nameMap]) => {
+    merged[node] = {};
+    Object.entries(nameMap).forEach(([name, votes]) => {
+      const resolved = resolveAlias(cat, name);
+      merged[node][resolved] = (merged[node][resolved]||0) + votes;
+    });
+  });
   const allCands = new Set();
-  allNodes.forEach(n => { if (catNodeData[n]) Object.keys(catNodeData[n]).forEach(c => allCands.add(c)); });
+  allNodes.forEach(n => { if (merged[n]) Object.keys(merged[n]).forEach(c => allCands.add(c)); });
   const cands = [...allCands];
-  const activeNodes = allNodes.filter(n => catNodeData[n]);
+  const activeNodes = allNodes.filter(n => merged[n]);
   if (!cands.length || !activeNodes.length) return '<div style="padding:1rem;font-size:0.75rem;color:var(--muted)">No data</div>';
   const thead = `<tr><th>Candidate</th>${activeNodes.map(n => `<th>${n}</th>`).join('')}<th>Total</th></tr>`;
   const rows = cands.map(cand => {
-    const cells = activeNodes.map(n => { const v = catNodeData[n]?.[cand]||0; return `<td class="${v===0?'nb-zero':''}">${v||'—'}</td>`; });
-    const total = activeNodes.reduce((s, n) => s + (catNodeData[n]?.[cand]||0), 0);
+    const cells = activeNodes.map(n => { const v = merged[n]?.[cand]||0; return `<td class="${v===0?'nb-zero':''}">${v||'—'}</td>`; });
+    const total = activeNodes.reduce((s, n) => s + (merged[n]?.[cand]||0), 0);
     return `<tr><td class="nb-cand-cell">${cand}</td>${cells.join('')}<td class="nb-total-cell">${total}</td></tr>`;
   });
   return `<div class="nb-header-row">Per-node vote breakdown</div><table><thead>${thead}</thead><tbody>${rows.join('')}</tbody></table>`;
@@ -1222,6 +1327,7 @@ async function loadAll() {
   document.getElementById('placeholder').style.display = 'none';
   document.getElementById('reveal-setup').style.display = 'none';
   document.getElementById('dup-warning').style.display = 'none';
+  document.getElementById('alias-section').style.display = 'none';
   document.getElementById('node-health-wrap').style.display = 'none';
   document.getElementById('trend-wrap').style.display = 'none';
   try {
@@ -1249,6 +1355,11 @@ async function loadAll() {
     }
     const allNodes = [...new Set(nodeLog.map(n => n.node))];
     knownNodes = allNodes;
+
+    // cache raw data so alias merges can recompute without re-fetching
+    lastRecords = allRecords; lastNodeLog = nodeLog; lastTotalFiles = paths.length;
+    lastCatNodeData = catNodeData; lastSnapshots = snapshots; lastAllNodes = allNodes;
+
     renderDashboard(allRecords, nodeLog, paths.length, catNodeData, snapshots, allNodes);
     // Update remote control node list
     buildNodeCheckList(allNodes, heartbeatCache);
@@ -1269,7 +1380,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
   const catMap = {};
   records.forEach(r => {
     const cat = (r['Category']||'Unknown').toUpperCase();
-    const name = normalizeName(r['Name']||'Unknown');
+    const name = resolveAlias(cat, normalizeName(r['Name']||'Unknown'));
     const v = parseInt(r['Votes'])||0;
     if (!catMap[cat]) catMap[cat] = {};
     catMap[cat][name] = (catMap[cat][name]||0) + v;
@@ -1288,7 +1399,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
     <div class="stat-card c1"><div class="s-label">Total votes cast</div><div class="s-val">${totalVotes}</div></div>
     <div class="stat-card c2"><div class="s-label">Nodes loaded</div><div class="s-val">${totalFiles}</div></div>
     <div class="stat-card c3"><div class="s-label">Categories</div><div class="s-val">${categories.length}</div></div>
-    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => normalizeName(r['Name']))).size}</div></div>`;
+    <div class="stat-card c4"><div class="s-label">Candidates</div><div class="s-val">${new Set(records.map(r => resolveAlias((r['Category']||'Unknown').toUpperCase(), normalizeName(r['Name'])))).size}</div></div>`;
   const trendCatData = buildTrendData(snapshots);
   if (snapshots.length >= 2) renderTrendSection(trendCatData, categories);
   const catWrap = document.getElementById('cat-blocks');
@@ -1326,7 +1437,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
       block.appendChild(row);
     });
     const bd = document.createElement('div'); bd.className = 'node-breakdown'; bd.id = bdId;
-    bd.innerHTML = buildNodeBreakdownHTML(catNodeData[cat]||{}, allNodes);
+    bd.innerHTML = buildNodeBreakdownHTML(catNodeData[cat]||{}, allNodes, cat);
     block.appendChild(bd); catWrap.appendChild(block);
   });
   const tbody = document.getElementById('node-tbody'); tbody.innerHTML = '';
