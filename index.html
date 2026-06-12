@@ -1046,11 +1046,19 @@ function nodeNameFromPath(path) {
 function normalizeName(name) {
   return (name || '')
     .trim()
-    .replace(/\s+/g, ' ')          // collapse multiple spaces into one
-    .replace(/[.\-_]+$/, '')       // strip trailing dots, dashes, underscores
-    .replace(/^[.\-_]+/, '')       // strip leading dots, dashes, underscores
+    // Remove stray dots followed by a space: "John. Doe" → "John Doe"
+    .replace(/\.\s+/g, ' ')
+    // Remove space-then-dot: "John .Doe" → "John Doe"
+    .replace(/\s+\./g, ' ')
+    // Strip leading/trailing dots, dashes, underscores
+    .replace(/^[.\-_]+/, '')
+    .replace(/[.\-_]+$/, '')
+    // Collapse any leftover multiple spaces
+    .replace(/\s+/g, ' ')
+    .trim()
     .toLowerCase()
-    .replace(/\b\w/g, c => c.toUpperCase()); // convert to Title Case
+    // Title Case
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 /* ════════════════════════════════════════════
@@ -1133,7 +1141,7 @@ function buildTrendData(snapshots) {
   [...snapshots].sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp)).forEach(snap => {
     snap.records.forEach(r => {
       const cat = (r['Category']||'Unknown').toUpperCase();
-      const name = normalizeName(r['Name']||'Unknown'); // ← normalized
+      const name = normalizeName(r['Name']||'Unknown');
       const votes = parseInt(r['Votes'])||0;
       if (!catData[cat]) catData[cat] = {};
       if (!catData[cat][name]) catData[cat][name] = [];
@@ -1229,7 +1237,7 @@ async function loadAll() {
         if (records.length > 0) snapshots.push({ node, timestamp:exp, records });
         records.forEach(r => {
           const cat = (r['Category']||'Unknown').toUpperCase();
-          const name = normalizeName(r['Name']||'Unknown'); // ← normalized
+          const name = normalizeName(r['Name']||'Unknown');
           const votes = parseInt(r['Votes'])||0;
           if (!catNodeData[cat]) catNodeData[cat] = {};
           if (!catNodeData[cat][node]) catNodeData[cat][node] = {};
@@ -1259,7 +1267,7 @@ function renderDashboard(records, nodeLog, totalFiles, catNodeData, snapshots, a
   const catMap = {};
   records.forEach(r => {
     const cat = (r['Category']||'Unknown').toUpperCase();
-    const name = normalizeName(r['Name']||'Unknown'); // ← normalized
+    const name = normalizeName(r['Name']||'Unknown');
     const v = parseInt(r['Votes'])||0;
     if (!catMap[cat]) catMap[cat] = {};
     catMap[cat][name] = (catMap[cat][name]||0) + v;
